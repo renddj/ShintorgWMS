@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Выгрузка для бухгалтерии{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Выгрузка для учётной системы</h5>
+
+<form method="get" action="/export/download" style="max-width:480px">
+    <div class="card border-dark">
+        <div class="card-header bg-dark text-white small">Параметры выгрузки</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold small text-uppercase">Дата с *</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ today }}" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold small text-uppercase">Дата по *</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ today }}" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold small text-uppercase">Тип операций</label>
+                    <select name="op_type" class="form-select form-select-sm">
+                        <option value="all">Все операции</option>
+                        <option value="shipment">Только отгрузки</option>
+                        <option value="receipt">Только приёмки</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-dark btn-sm">Выгрузить в Excel (.xlsx)</button>
+        </div>
+    </div>
+</form>
+
+<p class="text-muted small mt-3">Файл Excel будет содержать листы «Отгрузки» и «Приёмки» за выбранный период.</p>
+{% endblock %}

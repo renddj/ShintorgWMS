@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_user %}Редактировать пользователя{% else %}Новый пользователь{% endif %}{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">{% if edit_user %}Редактировать: {{ edit_user.full_name }}{% else %}Добавить пользователя{% endif %}</h5>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<form method="post" action="{% if edit_user %}/users/{{ edit_user.id }}/edit{% else %}/users/new{% endif %}" style="max-width:480px">
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Логин {% if not edit_user %}*{% endif %}</label>
+        {% if not edit_user %}
+        <input type="text" name="username" class="form-control form-control-sm" required>
+        {% else %}
+        <input type="text" class="form-control form-control-sm bg-light" value="{{ edit_user.username }}" disabled>
+        {% endif %}
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">ФИО *</label>
+        <input type="text" name="full_name" class="form-control form-control-sm" value="{{ edit_user.full_name if edit_user else '' }}" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Роль *</label>
+        <select name="role" class="form-select form-select-sm" required>
+            {% for r in roles %}
+            <option value="{{ r }}" {% if edit_user and edit_user.role == r %}selected{% endif %}>{{ role_labels[r] }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">{% if edit_user %}Новый пароль (оставьте пустым, чтобы не менять){% else %}Пароль *{% endif %}</label>
+        <input type="password" name="password" class="form-control form-control-sm" {% if not edit_user %}required{% endif %} minlength="8">
+        <div class="form-text">Минимум 8 символов</div>
+    </div>
+    {% if edit_user %}
+    <div class="mb-3">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if edit_user.is_active %}checked{% endif %}>
+            <label class="form-check-label small fw-bold" for="is_active">Активен</label>
+        </div>
+    </div>
+    {% endif %}
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-dark btn-sm">Сохранить</button>
+        <a href="/users" class="btn btn-outline-dark btn-sm">Отмена</a>
+    </div>
+</form>
+{% endblock %}

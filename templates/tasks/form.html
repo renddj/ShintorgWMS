@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Новое задание{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Создать задание на отгрузку</h5>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<form method="post" action="/tasks/new" style="max-width:600px">
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Поиск товара</label>
+        <input type="text" id="product-search" class="form-control form-control-sm" placeholder="Введите наименование или артикул...">
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Товар *</label>
+        <select name="product_id" id="product_id" class="form-select form-select-sm" required size="7">
+            {% for p in products %}
+            <option class="product-option" value="{{ p.id }}" data-search="{{ p.name|lower }} {{ p.article|lower }}">
+                {{ p.article }} — {{ p.name }} (доступно: {{ p.available_quantity|int }} {{ p.unit }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Количество *</label>
+        <input type="number" name="quantity" class="form-control form-control-sm" min="0.01" step="0.01" required style="max-width:200px">
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Комментарий</label>
+        <textarea name="comment" class="form-control form-control-sm" rows="2"></textarea>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-dark btn-sm">Создать задание</button>
+        <a href="/tasks" class="btn btn-outline-dark btn-sm">Отмена</a>
+    </div>
+</form>
+{% endblock %}

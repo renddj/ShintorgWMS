@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}Редактировать товар{% else %}Новый товар{% endif %}{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">{% if product %}Редактировать: {{ product.name }}{% else %}Добавить товар{% endif %}</h5>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<form method="post" action="{% if product %}/products/{{ product.id }}/edit{% else %}/products/new{% endif %}" enctype="multipart/form-data" style="max-width:640px">
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label fw-bold small text-uppercase">Наименование *</label>
+            <input type="text" name="name" class="form-control form-control-sm" value="{{ product.name if product else '' }}" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Артикул *</label>
+            <input type="text" name="article" class="form-control form-control-sm" value="{{ product.article if product else '' }}" required>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Тип товара *</label>
+            <select name="product_type" class="form-select form-select-sm" required>
+                <option value="large" {% if product and product.product_type == 'large' %}selected{% endif %}>Крупногабаритный</option>
+                <option value="small" {% if product and product.product_type == 'small' %}selected{% endif %}>Малогабаритный</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Единица измерения *</label>
+            <select name="unit" class="form-select form-select-sm" required>
+                <option value="шт" {% if product and product.unit == 'шт' %}selected{% endif %}>шт</option>
+                <option value="кг" {% if product and product.unit == 'кг' %}selected{% endif %}>кг</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Мин. остаток</label>
+            <input type="number" name="min_quantity" class="form-control form-control-sm" min="0" step="1" value="{{ product.min_quantity|int if product else 0 }}">
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-bold small text-uppercase">Адрес хранения *</label>
+            <select name="address_id" class="form-select form-select-sm" required>
+                <option value="">-- выберите адрес --</option>
+                {% for addr in addresses %}
+                <option value="{{ addr.id }}" {% if product and product.address_id == addr.id %}selected{% endif %}>{{ addr.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-bold small text-uppercase">Комментарий</label>
+            <textarea name="comment" class="form-control form-control-sm" rows="2">{{ product.comment if product and product.comment else '' }}</textarea>
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-bold small text-uppercase">Фото (jpg, png)</label>
+            <input type="file" name="photo" class="form-control form-control-sm" accept="image/*">
+            {% if product and product.photo_path %}
+            <div class="form-text">Текущее фото: {{ product.photo_path }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-dark btn-sm">Сохранить</button>
+        <a href="/products" class="btn btn-outline-dark btn-sm">Отмена</a>
+    </div>
+</form>
+{% endblock %}

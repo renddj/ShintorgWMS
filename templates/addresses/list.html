@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Адресная структура{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Адресная структура склада</h5>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="card border-dark">
+            <div class="card-header bg-dark text-white small">Адреса хранения ({{ addresses|length }})</div>
+            <div class="card-body p-0">
+                {% if addresses %}
+                <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-secondary"><tr><th>#</th><th>Адрес</th><th>Тип</th></tr></thead>
+                    <tbody>
+                    {% for addr in addresses %}
+                    <tr>
+                        <td>{{ addr.id }}</td>
+                        <td>{{ addr.display_name }}</td>
+                        <td>{% if addr.address_type == 'zone_row' %}Зона/Ряд{% else %}Стеллаж{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <p class="text-muted p-3 mb-0 small">Адресов нет. Сначала создайте зоны и ряды.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card border-secondary mt-3">
+            <div class="card-header small">Зоны и ряды</div>
+            <div class="card-body small">
+                {% for z in zones %}
+                <div class="mb-1">
+                    <strong>Зона {{ z.name }}</strong>
+                    {% if z.rows %} — ряды: {% for r in z.rows %}{{ r.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    {% else %} — <span class="text-muted">рядов нет</span>{% endif %}
+                </div>
+                {% else %}
+                <span class="text-muted">Зон нет</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="accordion" id="addrAccordion">
+
+            <div class="accordion-item border-dark">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colZone">Добавить зону</button>
+                </h2>
+                <div id="colZone" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
+                    <div class="accordion-body py-2">
+                        <form method="post" action="/addresses/zone/new" class="row g-2">
+                            <div class="col-8"><input type="text" name="name" class="form-control form-control-sm" placeholder="Название зоны (А, Б...)" required></div>
+                            <div class="col-4"><button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-dark">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colRow">Добавить ряд</button>
+                </h2>
+                <div id="colRow" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
+                    <div class="accordion-body py-2">
+                        <form method="post" action="/addresses/row/new" class="row g-2">
+                            <div class="col-4">
+                                <select name="zone_id" class="form-select form-select-sm" required>
+                                    <option value="">-- зона --</option>
+                                    {% for z in zones %}<option value="{{ z.id }}">{{ z.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="Номер ряда" required></div>
+                            <div class="col-4"><button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-dark">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colShelf">Добавить стеллаж</button>
+                </h2>
+                <div id="colShelf" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
+                    <div class="accordion-body py-2">
+                        <form method="post" action="/addresses/shelf/new" class="row g-2">
+                            <div class="col-4"><input type="number" name="row_id" class="form-control form-control-sm" placeholder="ID ряда" required></div>
+                            <div class="col-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="С1" required></div>
+                            <div class="col-4"><button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-dark">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colLevel">Добавить уровень</button>
+                </h2>
+                <div id="colLevel" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
+                    <div class="accordion-body py-2">
+                        <form method="post" action="/addresses/level/new" class="row g-2">
+                            <div class="col-4"><input type="number" name="shelf_id" class="form-control form-control-sm" placeholder="ID стеллажа" required></div>
+                            <div class="col-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="У1" required></div>
+                            <div class="col-4"><button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-dark">
+                <h2 class="accordion-header">
+                    <button class="accordion-button bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colAddr">Создать адрес хранения</button>
+                </h2>
+                <div id="colAddr" class="accordion-collapse collapse show" data-bs-parent="#addrAccordion">
+                    <div class="accordion-body py-2">
+                        <form method="post" action="/addresses/address/new" class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase">Тип адреса</label>
+                                <select name="address_type" id="addr-type" class="form-select form-select-sm" required>
+                                    <option value="zone_row">Зона + Ряд</option>
+                                    <option value="zone_row_shelf_level">Зона + Ряд + Стеллаж + Уровень</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-uppercase">Зона</label>
+                                <select name="zone_id" id="zone_id" class="form-select form-select-sm" required>
+                                    <option value="">-- зона --</option>
+                                    {% for z in zones %}<option value="{{ z.id }}">{{ z.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-uppercase">Ряд</label>
+                                <select name="row_id" id="row_id" class="form-select form-select-sm" required>
+                                    <option value="">-- выберите зону --</option>
+                                </select>
+                            </div>
+                            <div class="col-6" id="shelf-row" style="display:none">
+                                <label class="form-label small fw-bold text-uppercase">Стеллаж</label>
+                                <select name="shelf_id" id="shelf_id" class="form-select form-select-sm">
+                                    <option value="">-- стеллаж --</option>
+                                </select>
+                            </div>
+                            <div class="col-6" id="level-row" style="display:none">
+                                <label class="form-label small fw-bold text-uppercase">Уровень</label>
+                                <select name="level_id" id="level_id" class="form-select form-select-sm">
+                                    <option value="">-- уровень --</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-dark btn-sm">Создать адрес</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

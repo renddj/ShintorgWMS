@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+    <h5 class="mb-0">{{ product.name }}</h5>
+    <div class="d-flex gap-2">
+        {% if user.role == 'admin' %}
+        <a href="/products/{{ product.id }}/edit" class="btn btn-outline-dark btn-sm">Редактировать</a>
+        {% endif %}
+        <a href="/products" class="btn btn-outline-secondary btn-sm">Назад</a>
+    </div>
+</div>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+{% if product.is_low_stock %}
+<div class="alert alert-warning py-2">Остаток ниже минимального ({{ product.min_quantity|int }} {{ product.unit }})</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="card border-dark mb-3">
+            <div class="card-header bg-dark text-white small">Сведения о товаре</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr><td class="text-muted w-40">Артикул</td><td class="fw-bold">{{ product.article }}</td></tr>
+                        <tr><td class="text-muted">Тип</td><td>{% if product.product_type == 'large' %}Крупногабаритный{% else %}Малогабаритный{% endif %}</td></tr>
+                        <tr><td class="text-muted">Единица</td><td>{{ product.unit }}</td></tr>
+                        <tr><td class="text-muted">Адрес хранения</td><td class="fw-bold">{{ product.address.display_name if product.address else '—' }}</td></tr>
+                        <tr><td class="text-muted">Фактический остаток</td><td>{{ product.quantity|int }} {{ product.unit }}</td></tr>
+                        <tr><td class="text-muted">Резерв</td><td>{{ product.reserved_quantity|int }} {{ product.unit }}</td></tr>
+                        <tr><td class="text-muted">Доступно</td><td class="fw-bold">{{ product.available_quantity|int }} {{ product.unit }}</td></tr>
+                        <tr><td class="text-muted">Мин. остаток</td><td>{{ product.min_quantity|int }} {{ product.unit }}</td></tr>
+                        {% if product.comment %}<tr><td class="text-muted">Комментарий</td><td>{{ product.comment }}</td></tr>{% endif %}
+                        <tr><td class="text-muted">Добавлен</td><td>{{ product.created_at.strftime('%d.%m.%Y') if product.created_at else '—' }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if user.role == 'admin' %}
+        <div class="card border-success mb-3">
+            <div class="card-header bg-dark text-white small">Приёмка товара</div>
+            <div class="card-body">
+                <form method="post" action="/products/{{ product.id }}/receipt">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-uppercase">Количество *</label>
+                            <input type="number" name="quantity" class="form-control form-control-sm" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Комментарий (накладная)</label>
+                            <input type="text" name="comment" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-dark btn-sm w-100">Принять</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-danger mb-3">
+            <div class="card-header bg-dark text-white small">Списание товара</div>
+            <div class="card-body">
+                <form method="post" action="/products/{{ product.id }}/writeoff">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-uppercase">Количество *</label>
+                            <input type="number" name="quantity" class="form-control form-control-sm" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase">Причина</label>
+                            <input type="text" name="comment" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">Списать</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-secondary">
+            <div class="card-header small bg-secondary text-white">Фото товара</div>
+            <div class="card-body text-center p-2">
+                {% if product.photo_path %}
+                <img src="{{ product.photo_path }}" alt="Фото товара" class="img-fluid border">
+                {% else %}
+                <div class="text-muted py-5 small">Фото не загружено</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

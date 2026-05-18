@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Шинторг WMS{% endblock %}</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="bg-light">
+
+{% if user %}
+<nav class="navbar navbar-expand-md navbar-dark bg-dark border-bottom border-secondary mb-3 py-1">
+    <div class="container-fluid">
+        <span class="navbar-brand fw-bold me-4" style="font-family:monospace">Шинторг WMS</span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">Главная</a>
+                </li>
+                {% if user.role in ['admin', 'manager', 'storekeeper', 'loader', 'accountant'] %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/products' in request.url.path %}active{% endif %}" href="/products">Товары</a>
+                </li>
+                {% endif %}
+                {% if user.role in ['admin', 'manager', 'storekeeper', 'loader'] %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/tasks' in request.url.path %}active{% endif %}" href="/tasks">Задания</a>
+                </li>
+                {% endif %}
+                {% if user.role == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/addresses' in request.url.path %}active{% endif %}" href="/addresses">Адреса</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/stock' in request.url.path %}active{% endif %}" href="/stock/history">История</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if '/users' in request.url.path %}active{% endif %}" href="/users">Пользователи</a>
+                </li>
+                {% endif %}
+                {% if user.role in ['admin', 'accountant'] %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/export' in request.url.path %}active{% endif %}" href="/export">Выгрузка</a>
+                </li>
+                {% endif %}
+                {% if user.role == 'accountant' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/stock' in request.url.path %}active{% endif %}" href="/stock/history">История</a>
+                </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item">
+                    <span class="navbar-text text-secondary me-3 small">{{ user.full_name }}</span>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-sm btn-outline-secondary" href="/logout">Выйти</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endif %}
+
+<div class="container-fluid px-3" style="max-width:1300px">
+    {% block content %}{% endblock %}
+</div>
+
+<script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/main.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

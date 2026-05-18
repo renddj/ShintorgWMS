@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Главная</h5>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card border-dark h-100">
+            <div class="card-body text-center">
+                <div class="display-5 fw-bold">{{ active_count }}</div>
+                <div class="text-muted small text-uppercase">Активных заданий</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card {% if problem_count > 0 %}border-danger{% else %}border-dark{% endif %} h-100">
+            <div class="card-body text-center">
+                <div class="display-5 fw-bold {% if problem_count > 0 %}text-danger{% endif %}">{{ problem_count }}</div>
+                <div class="text-muted small text-uppercase">С проблемой</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card {% if low_stock_count > 0 %}border-warning{% else %}border-dark{% endif %} h-100">
+            <div class="card-body text-center">
+                <div class="display-5 fw-bold {% if low_stock_count > 0 %}text-warning{% endif %}">{{ low_stock_count }}</div>
+                <div class="text-muted small text-uppercase">Мало на складе</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="mb-0">Последние 10 заданий</h6>
+    <div>
+        <a href="/tasks/new" class="btn btn-dark btn-sm">+ Создать задание</a>
+        <a href="/tasks" class="btn btn-outline-dark btn-sm ms-1">Все задания</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+<table class="table table-bordered table-hover table-sm">
+    <thead class="table-dark">
+        <tr>
+            <th>#</th><th>Товар</th><th>Кол-во</th><th>Статус</th><th>Кладовщик</th><th>Создано</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for task in recent_tasks %}
+    <tr>
+        <td><a href="/tasks/{{ task.id }}" class="text-dark">{{ task.id }}</a></td>
+        <td>{{ task.product.name if task.product else '—' }}</td>
+        <td class="num">{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</td>
+        <td>
+            {% if task.status == 'new' %}<span class="badge badge-new">Новое</span>
+            {% elif task.status == 'in_progress' %}<span class="badge badge-progress">В работе</span>
+            {% elif task.status == 'problem' %}<span class="badge badge-problem">Проблема</span>
+            {% elif task.status == 'done' %}<span class="badge badge-done">Выполнено</span>
+            {% else %}<span class="badge badge-cancelled">Отменено</span>{% endif %}
+        </td>
+        <td>{{ task.assignee.full_name if task.assignee else '—' }}</td>
+        <td class="text-nowrap small">{{ task.created_at.strftime('%d.%m.%Y %H:%M') if task.created_at else '—' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-muted">Заданий пока нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Задания{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+    <h5 class="mb-0">Задания на отгрузку</h5>
+    {% if user.role in ['admin', 'manager'] %}
+    <a href="/tasks/new" class="btn btn-dark btn-sm">+ Новое задание</a>
+    {% endif %}
+</div>
+
+<div class="table-responsive">
+<table class="table table-bordered table-hover table-sm">
+    <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Товар</th>
+            <th class="text-end">Кол-во</th>
+            <th>Статус</th>
+            <th>Кладовщик</th>
+            <th>Создал</th>
+            <th>Создано</th>
+            {% if user.role in ['admin', 'manager'] %}<th></th>{% endif %}
+        </tr>
+    </thead>
+    <tbody>
+    {% for task in tasks %}
+    <tr>
+        <td><a href="/tasks/{{ task.id }}" class="text-dark fw-bold">{{ task.id }}</a></td>
+        <td>{{ task.product.name if task.product else '—' }}</td>
+        <td class="text-end num text-nowrap">{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</td>
+        <td>
+            {% if task.status == 'new' %}<span class="badge badge-new">Новое</span>
+            {% elif task.status == 'in_progress' %}<span class="badge badge-progress">В работе</span>
+            {% elif task.status == 'problem' %}<span class="badge badge-problem">Проблема</span>
+            {% elif task.status == 'done' %}<span class="badge badge-done">Выполнено</span>
+            {% else %}<span class="badge badge-cancelled">Отменено</span>{% endif %}
+        </td>
+        <td>{{ task.assignee.full_name if task.assignee else '—' }}</td>
+        <td>{{ task.creator.full_name if task.creator else '—' }}</td>
+        <td class="text-nowrap small">{{ task.created_at.strftime('%d.%m.%Y %H:%M') if task.created_at else '—' }}</td>
+        {% if user.role in ['admin', 'manager'] %}
+        <td>
+            {% if task.status in ['new', 'problem'] %}
+            <form method="post" action="/tasks/{{ task.id }}/cancel" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('Отменить задание #{{ task.id }}?')">Отменить</button>
+            </form>
+            {% endif %}
+        </td>
+        {% endif %}
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-muted">Заданий нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Задания{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Мои задания</h5>
+
+{% if my_tasks %}
+<h6 class="mb-2">В работе ({{ my_tasks|length }})</h6>
+{% for task in my_tasks %}
+<div class="card border-dark mb-2">
+    <div class="card-body py-2">
+        <div class="fw-bold">{{ task.product.name if task.product else '—' }}</div>
+        <div class="small text-muted">Задание #{{ task.id }} &nbsp;|&nbsp; Количество: <strong>{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</strong></div>
+        {% if task.product and task.product.address %}
+        <div class="address-block mt-1">{{ task.product.address.display_name }}</div>
+        {% endif %}
+        <a href="/tasks/{{ task.id }}" class="btn btn-dark btn-sm mt-1">Открыть задание</a>
+    </div>
+</div>
+{% endfor %}
+<hr>
+{% endif %}
+
+<h6 class="mb-2">Новые задания ({{ new_tasks|length }})</h6>
+{% for task in new_tasks %}
+<div class="card border-secondary mb-2">
+    <div class="card-body py-2">
+        <div class="fw-bold">{{ task.product.name if task.product else '—' }}</div>
+        <div class="small text-muted">
+            Задание #{{ task.id }} &nbsp;|&nbsp;
+            Количество: <strong>{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</strong>
+            &nbsp;|&nbsp; {{ task.created_at.strftime('%d.%m %H:%M') if task.created_at else '' }}
+        </div>
+        {% if task.product and task.product.address %}
+        <div class="address-block mt-1">{{ task.product.address.display_name }}</div>
+        {% endif %}
+        <div class="d-flex gap-2 mt-1">
+            <form method="post" action="/tasks/{{ task.id }}/take">
+                <button type="submit" class="btn btn-dark btn-sm">Взять в работу</button>
+            </form>
+            <a href="/tasks/{{ task.id }}" class="btn btn-outline-dark btn-sm">Подробнее</a>
+        </div>
+    </div>
+</div>
+{% else %}
+<p class="text-muted">Новых заданий нет</p>
+{% endfor %}
+{% endblock %}

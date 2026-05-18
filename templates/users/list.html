@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+    <h5 class="mb-0">Пользователи</h5>
+    <a href="/users/new" class="btn btn-dark btn-sm">+ Добавить пользователя</a>
+</div>
+
+<div class="table-responsive">
+<table class="table table-bordered table-hover table-sm">
+    <thead class="table-dark">
+        <tr>
+            <th>#</th><th>Логин</th><th>ФИО</th><th>Роль</th><th>Активен</th><th>Создан</th><th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+        <td>{{ u.id }}</td>
+        <td><code>{{ u.username }}</code></td>
+        <td>{{ u.full_name }}</td>
+        <td>{{ role_labels.get(u.role, u.role) }}</td>
+        <td>{% if u.is_active %}<span class="badge bg-success">Да</span>{% else %}<span class="badge bg-secondary">Нет</span>{% endif %}</td>
+        <td class="text-nowrap small">{{ u.created_at.strftime('%d.%m.%Y') if u.created_at else '—' }}</td>
+        <td><a href="/users/{{ u.id }}/edit" class="btn btn-outline-dark btn-sm">Редактировать</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="text-muted">Пользователей нет</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

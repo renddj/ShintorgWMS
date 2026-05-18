@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Нет доступа{% endblock %}
+{% block content %}
+<div class="alert alert-danger mt-4">
+    <h4>403 — Нет доступа</h4>
+    У вас нет прав для просмотра этой страницы.
+</div>
+<a href="/dashboard" class="btn btn-dark btn-sm">На главную</a>
+{% endblock %}

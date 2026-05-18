@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Задания в работе{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Задания в работе</h5>
+
+{% for task in active_tasks %}
+<div class="card border-secondary mb-2">
+    <div class="card-body py-2">
+        <div class="fw-bold">{{ task.product.name if task.product else '—' }}</div>
+        <div class="small text-muted">
+            Задание #{{ task.id }} &nbsp;|&nbsp;
+            Количество: <strong>{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</strong>
+            {% if task.assignee %}&nbsp;|&nbsp; Кладовщик: {{ task.assignee.full_name }}{% endif %}
+        </div>
+        {% if task.product and task.product.address %}
+        <div class="address-block mt-1">{{ task.product.address.display_name }}</div>
+        {% endif %}
+        <a href="/tasks/{{ task.id }}" class="btn btn-outline-dark btn-sm mt-1">Открыть</a>
+    </div>
+</div>
+{% else %}
+<p class="text-muted">Нет активных заданий</p>
+{% endfor %}
+{% endblock %}

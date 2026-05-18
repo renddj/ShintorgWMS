@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Бухгалтерия{% endblock %}
+{% block content %}
+<h5 class="mb-3 border-bottom pb-2">Данные для учётной системы</h5>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-3">
+        <div class="card border-dark">
+            <div class="card-body text-center">
+                <div class="display-5 fw-bold">{{ today_closed }}</div>
+                <div class="text-muted small text-uppercase">Отгрузок сегодня</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-dark mb-3" style="max-width:400px">
+    <div class="card-header bg-dark text-white small">Быстрая выгрузка за сегодня</div>
+    <div class="card-body">
+        <a href="/export/download?date_from={{ today }}&date_to={{ today }}&op_type=all" class="btn btn-dark btn-sm">Скачать Excel за сегодня</a>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <a href="/export" class="btn btn-outline-dark btn-sm">Выгрузка за период</a>
+    <a href="/products" class="btn btn-outline-dark btn-sm">Остатки</a>
+    <a href="/stock/history" class="btn btn-outline-dark btn-sm">История движения</a>
+</div>
+{% endblock %}

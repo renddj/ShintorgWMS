@@ -3,34 +3,48 @@
 {% block content %}
 <h5 class="mb-3 border-bottom pb-2">Выгрузка для учётной системы</h5>
 
-<form method="get" action="/export/download" style="max-width:480px">
-    <div class="card border-dark">
-        <div class="card-header bg-dark text-white small">Параметры выгрузки</div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-6">
-                    <label class="form-label fw-bold small text-uppercase">Дата с *</label>
-                    <input type="date" name="date_from" class="form-control form-control-sm" value="{{ today }}" required>
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-bold small text-uppercase">Дата по *</label>
-                    <input type="date" name="date_to" class="form-control form-control-sm" value="{{ today }}" required>
-                </div>
-                <div class="col-12">
-                    <label class="form-label fw-bold small text-uppercase">Тип операций</label>
-                    <select name="op_type" class="form-select form-select-sm">
-                        <option value="all">Все операции</option>
-                        <option value="shipment">Только отгрузки</option>
-                        <option value="receipt">Только приёмки</option>
-                    </select>
-                </div>
+<div class="card border-dark" style="max-width:480px">
+    <div class="card-header bg-dark text-white small">Параметры выгрузки</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-6">
+                <label class="form-label fw-bold small text-uppercase">Дата с *</label>
+                <input type="date" id="date_from" class="form-control form-control-sm" value="{{ week_ago }}" required>
+            </div>
+            <div class="col-6">
+                <label class="form-label fw-bold small text-uppercase">Дата по *</label>
+                <input type="date" id="date_to" class="form-control form-control-sm" value="{{ today }}" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold small text-uppercase">Тип операций</label>
+                <select id="op_type" class="form-select form-select-sm">
+                    <option value="all">Все операции</option>
+                    <option value="shipment">Только отгрузки</option>
+                    <option value="receipt">Только приёмки</option>
+                </select>
             </div>
         </div>
-        <div class="card-footer">
-            <button type="submit" class="btn btn-dark btn-sm">Выгрузить в Excel (.xlsx)</button>
-        </div>
     </div>
-</form>
+    <div class="card-footer d-flex gap-2">
+        <button class="btn btn-dark btn-sm" onclick="doDownload('xlsx')">Скачать Excel (.xlsx)</button>
+        <button class="btn btn-outline-dark btn-sm" onclick="doDownload('csv')">Скачать CSV</button>
+    </div>
+</div>
 
-<p class="text-muted small mt-3">Файл Excel будет содержать листы «Отгрузки» и «Приёмки» за выбранный период.</p>
+<p class="text-muted small mt-3">
+    Excel — два листа (Отгрузки и Приёмки).<br>
+    CSV — один файл с разделителем «;», кодировка UTF-8 с BOM (открывается в Excel).
+</p>
+
+{% block scripts %}
+<script>
+function doDownload(fmt) {
+    var dateFrom = document.getElementById('date_from').value;
+    var dateTo = document.getElementById('date_to').value;
+    var opType = document.getElementById('op_type').value;
+    if (!dateFrom || !dateTo) { alert('Укажите период'); return; }
+    window.location.href = '/export/download?date_from=' + dateFrom + '&date_to=' + dateTo + '&op_type=' + opType + '&fmt=' + fmt;
+}
+</script>
+{% endblock %}
 {% endblock %}

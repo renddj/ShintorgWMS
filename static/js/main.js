@@ -1,123 +1,163 @@
-// Live search for product table
+function loadOptions(url, selectEl, placeholder) {
+    selectEl.innerHTML = '<option value="">-- ' + placeholder + ' --</option>';
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            data.forEach(function(item) {
+                var opt = document.createElement("option");
+                opt.value = item.id;
+                opt.textContent = item.name;
+                selectEl.appendChild(opt);
+            });
+        });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-    var searchInput = document.getElementById("search-input");
-    var filterType = document.getElementById("filter-type");
-    var filterZone = document.getElementById("filter-zone");
+
+    // ── Фильтрация таблицы товаров ───────────────────────────────────────────
+    var searchInput    = document.getElementById("search-input");
+    var filterBrand    = document.getElementById("filter-brand");
+    var filterSeason   = document.getElementById("filter-season");
+    var filterTireType = document.getElementById("filter-tire-type");
+    var filterSize     = document.getElementById("filter-size");
 
     function filterTable() {
-        var query = searchInput ? searchInput.value.toLowerCase() : "";
-        var type = filterType ? filterType.value : "";
-        var zone = filterZone ? filterZone.value : "";
+        var query  = searchInput    ? searchInput.value.toLowerCase()  : "";
+        var brand  = filterBrand    ? filterBrand.value.toLowerCase()  : "";
+        var season = filterSeason   ? filterSeason.value               : "";
+        var ttype  = filterTireType ? filterTireType.value             : "";
+        var size   = filterSize     ? filterSize.value.toLowerCase()   : "";
 
-        var rows = document.querySelectorAll("table tbody tr[data-search]");
-        rows.forEach(function (row) {
-            var text = (row.dataset.search || "").toLowerCase();
-            var rowType = row.dataset.type || "";
-            var rowZone = row.dataset.zone || "";
-
-            var matchSearch = !query || text.includes(query);
-            var matchType = !type || rowType === type;
-            var matchZone = !zone || rowZone === zone;
-
-            row.style.display = (matchSearch && matchType && matchZone) ? "" : "none";
+        document.querySelectorAll("table tbody tr[data-search]").forEach(function(row) {
+            var ok =
+                (!query  || (row.dataset.search   || "").includes(query))  &&
+                (!brand  || (row.dataset.brand    || "").includes(brand))  &&
+                (!season || row.dataset.season    === season)              &&
+                (!ttype  || row.dataset.tireType  === ttype)               &&
+                (!size   || (row.dataset.size     || "").includes(size));
+            row.style.display = ok ? "" : "none";
         });
     }
 
-    if (searchInput) searchInput.addEventListener("input", filterTable);
-    if (filterType) filterType.addEventListener("change", filterTable);
-    if (filterZone) filterZone.addEventListener("change", filterTable);
+    [searchInput, filterBrand, filterSeason, filterTireType, filterSize].forEach(function(el) {
+        if (el) el.addEventListener("input", filterTable);
+    });
 
-    // Address form: cascade selects
-    var addrType = document.getElementById("addr-type");
-    var zoneSelect = document.getElementById("zone_id");
-    var rowSelect = document.getElementById("row_id");
-    var shelfSelect = document.getElementById("shelf_id");
-    var levelSelect = document.getElementById("level_id");
-    var shelfRow = document.getElementById("shelf-row");
-    var levelRow = document.getElementById("level-row");
+    // ── Форма "Создать адрес хранения" ──────────────────────────────────────
+    var addrType    = document.getElementById("addr-type");
+    var addrZone    = document.getElementById("zone_id");
+    var addrRow     = document.getElementById("row_id");
+    var addrShelf   = document.getElementById("shelf_id");
+    var addrLevel   = document.getElementById("level_id");
+    var addrShelfWrap = document.getElementById("shelf-row");
+    var addrLevelWrap = document.getElementById("level-row");
 
     function toggleAddrFields() {
         if (!addrType) return;
-        var isExtended = addrType.value === "zone_row_shelf_level";
-        if (shelfRow) shelfRow.style.display = isExtended ? "" : "none";
-        if (levelRow) levelRow.style.display = isExtended ? "" : "none";
+        var ext = addrType.value === "zone_row_shelf_level";
+        if (addrShelfWrap) addrShelfWrap.style.display = ext ? "" : "none";
+        if (addrLevelWrap) addrLevelWrap.style.display = ext ? "" : "none";
+    }
+    if (addrType) { addrType.addEventListener("change", toggleAddrFields); toggleAddrFields(); }
+
+    if (addrZone && addrRow) {
+        addrZone.addEventListener("change", function() {
+            if (this.value) {
+                loadOptions("/api/rows?zone_id=" + this.value, addrRow, "выберите ряд");
+                if (addrShelf) addrShelf.innerHTML = '<option value="">-- стеллаж --</option>';
+                if (addrLevel) addrLevel.innerHTML = '<option value="">-- уровень --</option>';
+            }
+        });
+    }
+    if (addrRow && addrShelf) {
+        addrRow.addEventListener("change", function() {
+            if (this.value) loadOptions("/api/shelves?row_id=" + this.value, addrShelf, "стеллаж");
+        });
+    }
+    if (addrShelf && addrLevel) {
+        addrShelf.addEventListener("change", function() {
+            if (this.value) loadOptions("/api/levels?shelf_id=" + this.value, addrLevel, "уровень");
+        });
     }
 
-    if (addrType) {
-        addrType.addEventListener("change", toggleAddrFields);
-        toggleAddrFields();
-    }
+    // ── Форма "Добавить стеллаж" ─────────────────────────────────────────────
+    var shelfFormZone = document.getElementById("shelf-zone-select");
+    var shelfFormRow  = document.getElementById("shelf-row-select");
 
-    function loadOptions(url, select, placeholder) {
-        select.innerHTML = '<option value="">-- ' + placeholder + ' --</option>';
-        fetch(url)
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                data.forEach(function (item) {
-                    var opt = document.createElement("option");
-                    opt.value = item.id;
-                    opt.textContent = item.name;
-                    select.appendChild(opt);
-                });
+    if (shelfFormZone && shelfFormRow) {
+        shelfFormZone.addEventListener("change", function() {
+            if (this.value) loadOptions("/api/rows?zone_id=" + this.value, shelfFormRow, "выберите ряд");
+            else shelfFormRow.innerHTML = '<option value="">-- ряд --</option>';
+        });
+
+        // Загрузить ряды при открытии аккордеона (если зона уже выбрана)
+        var colShelfEl = document.getElementById("colShelf");
+        if (colShelfEl) {
+            colShelfEl.addEventListener("show.bs.collapse", function() {
+                if (shelfFormZone.value) {
+                    loadOptions("/api/rows?zone_id=" + shelfFormZone.value, shelfFormRow, "выберите ряд");
+                }
             });
+        }
     }
 
-    if (zoneSelect && rowSelect) {
-        zoneSelect.addEventListener("change", function () {
+    // ── Форма "Добавить уровень" ─────────────────────────────────────────────
+    var levelFormZone  = document.getElementById("level-zone-select");
+    var levelFormRow   = document.getElementById("level-row-select");
+    var levelFormShelf = document.getElementById("level-shelf-select");
+
+    if (levelFormZone && levelFormRow) {
+        levelFormZone.addEventListener("change", function() {
             if (this.value) {
-                loadOptions("/api/rows?zone_id=" + this.value, rowSelect, "выберите ряд");
-                if (shelfSelect) shelfSelect.innerHTML = '<option value="">-- выберите стеллаж --</option>';
-                if (levelSelect) levelSelect.innerHTML = '<option value="">-- выберите уровень --</option>';
+                loadOptions("/api/rows?zone_id=" + this.value, levelFormRow, "выберите ряд");
+                if (levelFormShelf) levelFormShelf.innerHTML = '<option value="">-- стеллаж --</option>';
+            } else {
+                levelFormRow.innerHTML = '<option value="">-- ряд --</option>';
+                if (levelFormShelf) levelFormShelf.innerHTML = '<option value="">-- стеллаж --</option>';
             }
+        });
+
+        var colLevelEl = document.getElementById("colLevel");
+        if (colLevelEl) {
+            colLevelEl.addEventListener("show.bs.collapse", function() {
+                if (levelFormZone.value) {
+                    loadOptions("/api/rows?zone_id=" + levelFormZone.value, levelFormRow, "выберите ряд");
+                }
+            });
+        }
+    }
+    if (levelFormRow && levelFormShelf) {
+        levelFormRow.addEventListener("change", function() {
+            if (this.value) loadOptions("/api/shelves?row_id=" + this.value, levelFormShelf, "выберите стеллаж");
+            else levelFormShelf.innerHTML = '<option value="">-- стеллаж --</option>';
         });
     }
 
-    if (rowSelect && shelfSelect) {
-        rowSelect.addEventListener("change", function () {
-            if (this.value) {
-                loadOptions("/api/shelves?row_id=" + this.value, shelfSelect, "выберите стеллаж");
-                if (levelSelect) levelSelect.innerHTML = '<option value="">-- выберите уровень --</option>';
-            }
-        });
-    }
-
-    if (shelfSelect && levelSelect) {
-        shelfSelect.addEventListener("change", function () {
-            if (this.value) {
-                loadOptions("/api/levels?shelf_id=" + this.value, levelSelect, "выберите уровень");
-            }
-        });
-    }
-
-    // Product search in task form
+    // ── Поиск товара в форме задания ─────────────────────────────────────────
     var productSearch = document.getElementById("product-search");
-    var productId = document.getElementById("product_id");
-    var productList = document.getElementById("product-list");
-
-    if (productSearch && productList) {
-        productSearch.addEventListener("input", function () {
+    if (productSearch) {
+        productSearch.addEventListener("input", function() {
             var q = this.value.toLowerCase();
-            var items = productList.querySelectorAll(".product-option");
-            items.forEach(function (item) {
-                var txt = item.dataset.search || "";
-                item.style.display = txt.includes(q) ? "" : "none";
+            document.querySelectorAll(".product-option").forEach(function(opt) {
+                opt.style.display = (opt.dataset.search || "").includes(q) ? "" : "none";
             });
         });
     }
 
-    // Confirm delete/cancel
-    document.querySelectorAll("[data-confirm]").forEach(function (el) {
-        el.addEventListener("click", function (e) {
+    // ── Confirm для опасных действий ─────────────────────────────────────────
+    document.querySelectorAll("[data-confirm]").forEach(function(el) {
+        el.addEventListener("click", function(e) {
             if (!confirm(this.dataset.confirm)) e.preventDefault();
         });
     });
 
-    // Problem form toggle
-    var problemBtn = document.getElementById("problem-toggle");
+    // ── Проблема toggle ──────────────────────────────────────────────────────
+    var problemBtn  = document.getElementById("problem-toggle");
     var problemForm = document.getElementById("problem-form");
     if (problemBtn && problemForm) {
-        problemBtn.addEventListener("click", function () {
+        problemBtn.addEventListener("click", function() {
             problemForm.style.display = problemForm.style.display === "none" ? "" : "none";
         });
     }
+
 });

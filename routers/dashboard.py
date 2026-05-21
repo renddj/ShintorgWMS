@@ -6,7 +6,7 @@ from sqlalchemy import func
 from database import get_db
 from services.auth_service import get_current_user
 from models.task import Task
-from models.product import Product
+from models.product import Product, StockLocation
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -16,25 +16,26 @@ templates = Jinja2Templates(directory="templates")
 def index(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
-        return RedirectResponse("/login", status_code=302)
-    return RedirectResponse("/dashboard", status_code=302)
+        return RedirectResponse("/login", 302)
+    return RedirectResponse("/dashboard", 302)
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
-        return RedirectResponse("/login", status_code=302)
+        return RedirectResponse("/login", 302)
 
     ctx = {"request": request, "user": user}
 
     if user.role in ("admin", "manager"):
         active_count = db.query(Task).filter(Task.status.in_(["new", "in_progress"])).count()
         problem_count = db.query(Task).filter(Task.status == "problem").count()
-        low_stock_count = db.query(Product).filter(
-            Product.min_quantity > 0,
-            Product.quantity <= Product.min_quantity
-        ).count()
+
+        # Считаем товары с остатком ниже минимального через stock_locations
+        products = db.query(Product).filter(Product.min_quantity > 0).all()
+        low_stock_count = sum(1 for p in products if p.is_low_stock)
+
         recent_tasks = db.query(Task).order_by(Task.created_at.desc()).limit(10).all()
         ctx.update({
             "active_count": active_count,
@@ -46,7 +47,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
 
     elif user.role == "storekeeper":
         new_tasks = db.query(Task).filter(Task.status == "new").order_by(Task.created_at).all()
-        my_tasks = db.query(Task).filter(Task.assigned_to == user.id, Task.status == "in_progress").all()
+        my_tasks = db.query(Task).filter(
+            Task.assigned_to == user.id, Task.status == "in_progress"
+        ).all()
         ctx.update({"new_tasks": new_tasks, "my_tasks": my_tasks})
         return templates.TemplateResponse("dashboard/storekeeper.html", ctx)
 
@@ -64,4 +67,4 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         ctx.update({"today_closed": today_closed, "today": date.today().isoformat()})
         return templates.TemplateResponse("dashboard/accountant.html", ctx)
 
-    return RedirectResponse("/login", status_code=302)
+    return RedirectResponse("/login", 302)

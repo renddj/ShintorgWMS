@@ -6,14 +6,24 @@
 {% for task in active_tasks %}
 <div class="card border-secondary mb-2">
     <div class="card-body py-2">
-        <div class="fw-bold">{{ task.product.name if task.product else '—' }}</div>
+        <div class="d-flex gap-2 mb-1">
+            {% if task.task_type == 'receipt' %}<span class="badge bg-success">Приёмка</span>{% else %}<span class="badge bg-secondary">Отгрузка</span>{% endif %}
+            <span class="fw-bold">{{ task.product.name if task.product else '—' }}</span>
+        </div>
         <div class="small text-muted">
             Задание #{{ task.id }} &nbsp;|&nbsp;
             Количество: <strong>{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</strong>
             {% if task.assignee %}&nbsp;|&nbsp; Кладовщик: {{ task.assignee.full_name }}{% endif %}
         </div>
-        {% if task.product and task.product.address %}
-        <div class="address-block mt-1">{{ task.product.address.display_name }}</div>
+        {% if task.lines %}
+        <div class="mt-1">
+            {% for line in task.lines %}
+            <div class="address-block">
+                {% if task.task_type == 'receipt' %}Поставить{% else %}Взять{% endif %}
+                {{ line.quantity|int }} шт — {{ line.address.display_name if line.address else '—' }}
+            </div>
+            {% endfor %}
+        </div>
         {% endif %}
         <a href="/tasks/{{ task.id }}" class="btn btn-outline-dark btn-sm mt-1">Открыть</a>
     </div>

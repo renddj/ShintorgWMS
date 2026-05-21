@@ -9,27 +9,34 @@
 </div>
 
 <div class="row g-2 mb-3">
-    <div class="col-md-5">
+    <div class="col-md-4">
         <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Поиск по наименованию или артикулу...">
     </div>
-    <div class="col-md-3">
-        <select id="filter-type" class="form-select form-select-sm">
-            <option value="">Все типы</option>
-            <option value="large">Крупногабаритные</option>
-            <option value="small">Малогабаритные</option>
+    <div class="col-md-2">
+        <select id="filter-brand" class="form-select form-select-sm">
+            <option value="">Все бренды</option>
+            {% set brands = [] %}
+            {% for p in products %}{% if p.brand and p.brand not in brands %}{% set _ = brands.append(p.brand) %}<option value="{{ p.brand }}">{{ p.brand }}</option>{% endif %}{% endfor %}
         </select>
     </div>
-    <div class="col-md-3">
-        <select id="filter-zone" class="form-select form-select-sm">
-            <option value="">Все зоны</option>
-            {% set zones_seen = [] %}
-            {% for p in products %}
-                {% if p.address and p.address.zone and p.address.zone.name not in zones_seen %}
-                    {% set _ = zones_seen.append(p.address.zone.name) %}
-                    <option value="{{ p.address.zone.name }}">Зона {{ p.address.zone.name }}</option>
-                {% endif %}
-            {% endfor %}
+    <div class="col-md-2">
+        <select id="filter-season" class="form-select form-select-sm">
+            <option value="">Все сезоны</option>
+            <option value="summer">Лето</option>
+            <option value="winter">Зима</option>
+            <option value="allseason">Всесезонная</option>
         </select>
+    </div>
+    <div class="col-md-2">
+        <select id="filter-tire-type" class="form-select form-select-sm">
+            <option value="">Все типы</option>
+            <option value="agricultural">Сельхозтехника</option>
+            <option value="truck">Грузовая</option>
+            <option value="special">Спецтехника</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="text" id="filter-size" class="form-control form-control-sm" placeholder="Типоразмер...">
     </div>
 </div>
 
@@ -39,12 +46,13 @@
         <tr>
             <th>Артикул</th>
             <th>Наименование</th>
+            <th>Бренд</th>
+            <th>Типоразмер</th>
+            <th>Сезон</th>
             <th>Тип</th>
             <th class="text-end">Остаток</th>
-            <th class="text-end">Резерв</th>
             <th class="text-end">Доступно</th>
             <th>Ед.</th>
-            <th>Адрес</th>
             {% if user.role == 'admin' %}<th></th>{% endif %}
         </tr>
     </thead>
@@ -52,21 +60,21 @@
     {% for p in products %}
     <tr
         data-search="{{ p.name|lower }} {{ p.article|lower }}"
-        data-type="{{ p.product_type }}"
-        data-zone="{{ p.address.zone.name if p.address and p.address.zone else '' }}"
+        data-brand="{{ p.brand|lower if p.brand else '' }}"
+        data-season="{{ p.season or '' }}"
+        data-tire-type="{{ p.tire_type or '' }}"
+        data-size="{{ p.tire_size|lower if p.tire_size else '' }}"
         {% if p.is_low_stock %}class="low-stock"{% endif %}
     >
         <td><a href="/products/{{ p.id }}" class="text-dark fw-bold">{{ p.article }}</a></td>
-        <td>
-            {{ p.name }}
-            {% if p.is_low_stock %}<span class="badge bg-warning text-dark ms-1">!</span>{% endif %}
-        </td>
-        <td>{% if p.product_type == 'large' %}Крупногаб.{% else %}Малогаб.{% endif %}</td>
+        <td>{{ p.name }}{% if p.is_low_stock %} <span class="badge bg-warning text-dark">!</span>{% endif %}</td>
+        <td>{{ p.brand or '—' }}</td>
+        <td>{{ p.tire_size or '—' }}</td>
+        <td>{{ p.season_label }}</td>
+        <td>{{ p.tire_type_label }}</td>
         <td class="text-end num">{{ p.quantity|int }}</td>
-        <td class="text-end num">{{ p.reserved_quantity|int }}</td>
         <td class="text-end num fw-bold">{{ p.available_quantity|int }}</td>
         <td>{{ p.unit }}</td>
-        <td class="text-nowrap small">{{ p.address.display_name if p.address else '—' }}</td>
         {% if user.role == 'admin' %}
         <td class="text-nowrap">
             <a href="/products/{{ p.id }}/edit" class="btn btn-outline-dark btn-sm">Ред.</a>
@@ -78,7 +86,7 @@
         {% endif %}
     </tr>
     {% else %}
-    <tr><td colspan="9" class="text-muted">Товаров нет</td></tr>
+    <tr><td colspan="10" class="text-muted">Товаров нет</td></tr>
     {% endfor %}
     </tbody>
 </table>

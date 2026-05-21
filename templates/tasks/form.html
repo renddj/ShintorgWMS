@@ -1,14 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Новое задание{% endblock %}
 {% block content %}
-<h5 class="mb-3 border-bottom pb-2">Создать задание на отгрузку</h5>
+<h5 class="mb-3 border-bottom pb-2">Создать задание</h5>
 
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 
 <form method="post" action="/tasks/new" style="max-width:600px">
     <div class="mb-3">
+        <label class="form-label fw-bold small text-uppercase">Тип задания *</label>
+        <select name="task_type" class="form-select form-select-sm" required>
+            <option value="shipment">Отгрузка</option>
+            <option value="receipt">Приёмка</option>
+        </select>
+    </div>
+    <div class="mb-3">
         <label class="form-label fw-bold small text-uppercase">Поиск товара</label>
-        <input type="text" id="product-search" class="form-control form-control-sm" placeholder="Введите наименование или артикул...">
+        <input type="text" id="product-search" class="form-control form-control-sm" placeholder="Наименование или артикул...">
     </div>
     <div class="mb-3">
         <label class="form-label fw-bold small text-uppercase">Товар *</label>

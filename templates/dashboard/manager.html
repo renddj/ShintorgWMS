@@ -42,27 +42,25 @@
 <table class="table table-bordered table-hover table-sm">
     <thead class="table-dark">
         <tr>
-            <th>#</th><th>Товар</th><th>Кол-во</th><th>Статус</th><th>Кладовщик</th><th>Создано</th>
+            <th>#</th><th>Тип</th><th>Товар</th><th>Кол-во</th><th>Статус</th><th>Кладовщик</th><th>Создано</th>
         </tr>
     </thead>
     <tbody>
     {% for task in recent_tasks %}
     <tr>
         <td><a href="/tasks/{{ task.id }}" class="text-dark">{{ task.id }}</a></td>
+        <td>
+            {% if task.task_type == 'receipt' %}<span class="badge bg-success">Приёмка</span>
+            {% else %}<span class="badge bg-secondary">Отгрузка</span>{% endif %}
+        </td>
         <td>{{ task.product.name if task.product else '—' }}</td>
         <td class="num">{{ task.quantity|int }} {{ task.product.unit if task.product else '' }}</td>
-        <td>
-            {% if task.status == 'new' %}<span class="badge badge-new">Новое</span>
-            {% elif task.status == 'in_progress' %}<span class="badge badge-progress">В работе</span>
-            {% elif task.status == 'problem' %}<span class="badge badge-problem">Проблема</span>
-            {% elif task.status == 'done' %}<span class="badge badge-done">Выполнено</span>
-            {% else %}<span class="badge badge-cancelled">Отменено</span>{% endif %}
-        </td>
+        <td><span class="badge {{ task.status_class }}">{{ task.status_label }}</span></td>
         <td>{{ task.assignee.full_name if task.assignee else '—' }}</td>
         <td class="text-nowrap small">{{ task.created_at.strftime('%d.%m.%Y %H:%M') if task.created_at else '—' }}</td>
     </tr>
     {% else %}
-    <tr><td colspan="6" class="text-muted">Заданий пока нет</td></tr>
+    <tr><td colspan="7" class="text-muted">Заданий пока нет</td></tr>
     {% endfor %}
     </tbody>
 </table>

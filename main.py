@@ -6,7 +6,7 @@ import os
 from database import engine, Base
 import models  # noqa: F401 — register all models
 
-from routers import auth, dashboard, products, addresses, tasks, stock, export, users
+from routers import auth, dashboard, products, addresses, tasks, stock, export, users, warehouse
 
 app = FastAPI(title="Шинторг WMS")
 
@@ -30,6 +30,7 @@ app.include_router(tasks.router)
 app.include_router(stock.router)
 app.include_router(export.router)
 app.include_router(users.router)
+app.include_router(warehouse.router)
 
 
 @app.exception_handler(403)

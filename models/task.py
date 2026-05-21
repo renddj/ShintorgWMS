@@ -19,12 +19,14 @@ class Task(Base):
     problem_comment = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    to_address_id = Column(Integer, ForeignKey("storage_addresses.id"), nullable=True)  # для move
     closed_at = Column(DateTime, nullable=True)
 
     product = relationship("Product", back_populates="tasks")
     creator = relationship("User", foreign_keys=[created_by], back_populates="tasks_created")
     assignee = relationship("User", foreign_keys=[assigned_to], back_populates="tasks_assigned")
     lines = relationship("TaskLine", back_populates="task", cascade="all, delete-orphan")
+    to_address = relationship("StorageAddress", foreign_keys=[to_address_id])
 
     STATUS_LABELS = {
         "new": "Новое",
@@ -42,7 +44,7 @@ class Task(Base):
         "done": "badge-done",
         "cancelled": "badge-cancelled",
     }
-    TYPE_LABELS = {"shipment": "Отгрузка", "receipt": "Приёмка"}
+    TYPE_LABELS = {"shipment": "Отгрузка", "receipt": "Приёмка", "move": "Перемещение"}
 
     @property
     def status_label(self):

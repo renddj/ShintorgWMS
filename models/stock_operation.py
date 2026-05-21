@@ -26,6 +26,8 @@ class StockOperation(Base):
         "receipt": "Приёмка",
         "shipment": "Отгрузка",
         "writeoff": "Списание",
+        "move_out": "Перемещение (откуда)",
+        "move_in": "Перемещение (куда)",
     }
 
     @property

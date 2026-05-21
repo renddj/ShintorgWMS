@@ -7,7 +7,7 @@ from services.auth_service import get_current_user
 from services.task_service import create_task, plan_task, close_task, report_problem, cancel_task
 from models.task import Task
 from models.product import Product, StockLocation
-from models.address import StorageAddress
+from models.address import StorageAddress, Zone
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -39,7 +39,8 @@ def task_new_form(request: Request, db: Session = Depends(get_db)):
     if not user or user.role not in ("admin", "manager"):
         return RedirectResponse("/dashboard", 302)
     products = db.query(Product).order_by(Product.name).all()
-    return templates.TemplateResponse("tasks/form.html", {"request": request, "user": user, "products": products})
+    addresses = db.query(StorageAddress).order_by(StorageAddress.display_name).all()
+    return templates.TemplateResponse("tasks/form.html", {"request": request, "user": user, "products": products, "addresses": addresses})
 
 
 @router.post("/tasks/new")
@@ -49,17 +50,19 @@ def task_new(
     product_id: int = Form(...),
     quantity: float = Form(...),
     comment: str = Form(""),
+    to_address_id: int = Form(None),
     db: Session = Depends(get_db),
 ):
     user = get_current_user(request, db)
-    if not user or user.role not in ("admin", "manager"):
+    if not user or user.role not in ("admin", "manager", "storekeeper"):
         return RedirectResponse("/dashboard", 302)
 
-    task, error = create_task(db, task_type, product_id, quantity, user.id, comment or None)
+    task, error = create_task(db, task_type, product_id, quantity, user.id, comment or None, to_address_id)
     if error:
         products = db.query(Product).order_by(Product.name).all()
+        addresses = db.query(StorageAddress).order_by(StorageAddress.display_name).all()
         return templates.TemplateResponse("tasks/form.html", {
-            "request": request, "user": user, "products": products, "error": error
+            "request": request, "user": user, "products": products, "addresses": addresses, "error": error
         })
     return RedirectResponse("/tasks", 302)
 

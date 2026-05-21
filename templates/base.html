@@ -31,6 +31,11 @@
                     <a class="nav-link {% if '/tasks' in request.url.path %}active{% endif %}" href="/tasks">Задания</a>
                 </li>
                 {% endif %}
+                {% if user.role in ['admin', 'manager', 'storekeeper', 'accountant'] %}
+                <li class="nav-item">
+                    <a class="nav-link {% if '/warehouse' in request.url.path %}active{% endif %}" href="/warehouse">Карта склада</a>
+                </li>
+                {% endif %}
                 {% if user.role == 'admin' %}
                 <li class="nav-item">
                     <a class="nav-link {% if '/addresses' in request.url.path %}active{% endif %}" href="/addresses">Адреса</a>

@@ -59,3 +59,4 @@ class StorageAddress(Base):
     row = relationship("Row")
     shelf = relationship("Shelf")
     level = relationship("Level")
+    products = relationship("Product", back_populates="address")

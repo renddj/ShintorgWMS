@@ -7,7 +7,7 @@
 <div class="card border-secondary mb-2">
     <div class="card-body py-2">
         <div class="d-flex gap-2 mb-1">
-            {% if task.task_type == 'receipt' %}<span class="badge bg-success">Приёмка</span>{% else %}<span class="badge bg-secondary">Отгрузка</span>{% endif %}
+            {% if task.task_type == 'receipt' %}<span class="badge bg-success">Приёмка</span>{% elif task.task_type == 'move' %}<span class="badge bg-primary">Перемещение</span>{% else %}<span class="badge bg-secondary">Отгрузка</span>{% endif %}
             <span class="fw-bold">{{ task.product.name if task.product else '—' }}</span>
         </div>
         <div class="small text-muted">

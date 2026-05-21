@@ -29,6 +29,8 @@
         <td>
             {% if op.operation == 'receipt' %}<span class="badge bg-success">Приёмка</span>
             {% elif op.operation == 'shipment' %}<span class="badge bg-secondary">Отгрузка</span>
+            {% elif op.operation == 'move_out' %}<span class="badge bg-primary">Перемещение (откуда)</span>
+            {% elif op.operation == 'move_in' %}<span class="badge bg-primary">Перемещение (куда)</span>
             {% else %}<span class="badge bg-danger">Списание</span>{% endif %}
         </td>
         <td>{{ op.product.name if op.product else '—' }}</td>

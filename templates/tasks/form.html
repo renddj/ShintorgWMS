@@ -5,12 +5,13 @@
 
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 
-<form method="post" action="/tasks/new" style="max-width:600px">
+<form method="post" action="/tasks/new" style="max-width:600px" id="task-form">
     <div class="mb-3">
         <label class="form-label fw-bold small text-uppercase">Тип задания *</label>
-        <select name="task_type" class="form-select form-select-sm" required>
-            <option value="shipment">Отгрузка</option>
+        <select name="task_type" id="task-type" class="form-select form-select-sm" required>
+            <option value="shipment" {% if request.query_params.get('type') != 'move' %}selected{% endif %}>Отгрузка</option>
             <option value="receipt">Приёмка</option>
+            <option value="move" {% if request.query_params.get('type') == 'move' %}selected{% endif %}>Перемещение</option>
         </select>
     </div>
     <div class="mb-3">
@@ -19,7 +20,7 @@
     </div>
     <div class="mb-3">
         <label class="form-label fw-bold small text-uppercase">Товар *</label>
-        <select name="product_id" id="product_id" class="form-select form-select-sm" required size="7">
+        <select name="product_id" id="product_id" class="form-select form-select-sm" required size="6">
             {% for p in products %}
             <option class="product-option" value="{{ p.id }}" data-search="{{ p.name|lower }} {{ p.article|lower }}">
                 {{ p.article }} — {{ p.name }} (доступно: {{ p.available_quantity|int }} {{ p.unit }})
@@ -31,6 +32,15 @@
         <label class="form-label fw-bold small text-uppercase">Количество *</label>
         <input type="number" name="quantity" class="form-control form-control-sm" min="0.01" step="0.01" required style="max-width:200px">
     </div>
+    <div class="mb-3" id="to-address-block" style="display:none">
+        <label class="form-label fw-bold small text-uppercase">Адрес назначения (куда переместить) *</label>
+        <select name="to_address_id" id="to_address_id" class="form-select form-select-sm">
+            <option value="">— выберите адрес —</option>
+            {% for addr in addresses %}
+            <option value="{{ addr.id }}">{{ addr.display_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
     <div class="mb-3">
         <label class="form-label fw-bold small text-uppercase">Комментарий</label>
         <textarea name="comment" class="form-control form-control-sm" rows="2"></textarea>
@@ -40,4 +50,22 @@
         <a href="/tasks" class="btn btn-outline-dark btn-sm">Отмена</a>
     </div>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var taskType = document.getElementById("task-type");
+var toAddressBlock = document.getElementById("to-address-block");
+var toAddressSelect = document.getElementById("to_address_id");
+
+function toggleToAddress() {
+    var isMove = taskType && taskType.value === "move";
+    if (toAddressBlock) toAddressBlock.style.display = isMove ? "" : "none";
+    if (toAddressSelect) toAddressSelect.required = isMove;
+}
+if (taskType) {
+    taskType.addEventListener("change", toggleToAddress);
+    toggleToAddress();
+}
+</script>
 {% endblock %}

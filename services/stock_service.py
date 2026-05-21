@@ -66,3 +66,66 @@ def writeoff(db: Session, product_id: int, address_id: int, quantity: float, use
     db.add(op)
     db.commit()
     return loc, None
+
+
+def move(db: Session, product_id: int, from_address_id: int, to_address_id: int,
+         quantity: float, user_id: int, comment: str = None):
+    if from_address_id == to_address_id:
+        return None, "Адрес источника и назначения совпадают"
+
+    from_loc = db.query(StockLocation).filter(
+        StockLocation.product_id == product_id,
+        StockLocation.address_id == from_address_id,
+    ).with_for_update().first()
+
+    if not from_loc:
+        return None, "На адресе источника нет этого товара"
+
+    available = float(from_loc.quantity or 0) - float(from_loc.reserved_quantity or 0)
+    if available < quantity:
+        return None, f"Недостаточно товара. Доступно: {available}"
+
+    # Списываем с источника
+    qty_before_from = float(from_loc.quantity)
+    from_loc.quantity = qty_before_from - quantity
+
+    # Добавляем на назначение
+    to_loc = db.query(StockLocation).filter(
+        StockLocation.product_id == product_id,
+        StockLocation.address_id == to_address_id,
+    ).with_for_update().first()
+
+    if not to_loc:
+        to_loc = StockLocation(
+            product_id=product_id,
+            address_id=to_address_id,
+            quantity=0, reserved_quantity=0,
+        )
+        db.add(to_loc)
+        db.flush()
+
+    qty_before_to = float(to_loc.quantity)
+    to_loc.quantity = qty_before_to + quantity
+
+    # Пишем в историю двумя строками: списание и приход
+    from models.address import StorageAddress as _SA
+    from_addr = db.query(_SA).filter_by(id=from_address_id).first()
+    to_addr = db.query(_SA).filter_by(id=to_address_id).first()
+    from_name = from_addr.display_name if from_addr else str(from_address_id)
+    to_name = to_addr.display_name if to_addr else str(to_address_id)
+
+    db.add(StockOperation(
+        product_id=product_id, operation="move_out",
+        quantity=quantity, qty_before=qty_before_from, qty_after=float(from_loc.quantity),
+        performed_by=user_id,
+        comment=f"Перемещение → {to_name}" + (f". {comment}" if comment else ""),
+    ))
+    db.add(StockOperation(
+        product_id=product_id, operation="move_in",
+        quantity=quantity, qty_before=qty_before_to, qty_after=float(to_loc.quantity),
+        performed_by=user_id,
+        comment=f"Перемещение ← {from_name}" + (f". {comment}" if comment else ""),
+    ))
+
+    db.commit()
+    return True, None

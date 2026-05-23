@@ -6,92 +6,156 @@
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
 
-<div class="row g-3">
-    <div class="col-lg-8">
-        <!-- Фильтры -->
-        <div class="row g-2 mb-3">
-            <div class="col-md-5">
-                <select id="wh-filter-zone" class="form-select form-select-sm">
-                    <option value="">Все зоны</option>
-                    {% for z in zones %}
-                    <option value="{{ z.name }}">Зона {{ z.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-7">
-                <input type="text" id="wh-filter-product" class="form-control form-control-sm" placeholder="Поиск по товару...">
-            </div>
-        </div>
+<div class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select id="wh-filter-zone" class="form-select form-select-sm">
+            <option value="">Все зоны</option>
+            {% for z in zones %}
+            <option value="{{ z.name }}">Зона {{ z.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="text" id="wh-filter-name" class="form-control form-control-sm" placeholder="Название товара...">
+    </div>
+    <div class="col-md-3">
+        <input type="text" id="wh-filter-brand" class="form-control form-control-sm" placeholder="Бренд...">
+    </div>
+    <div class="col-md-3">
+        <input type="text" id="wh-filter-size" class="form-control form-control-sm" placeholder="Типоразмер...">
+    </div>
+</div>
 
-        <!-- Таблица -->
-        <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm" id="wh-table">
-            <thead class="table-dark">
-                <tr>
-                    <th>Адрес</th>
-                    <th>Товар</th>
-                    <th>Бренд</th>
-                    <th>Типоразмер</th>
-                    <th class="text-end">Кол-во</th>
-                    <th class="text-end">Резерв</th>
-                    <th class="text-end">Доступно</th>
-                    <th>Ед.</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for loc in locations %}
+<div class="table-responsive mb-4">
+<table class="table table-bordered table-sm" id="wh-table">
+    <thead class="table-dark">
+        <tr>
+            <th style="width:22%">Адрес</th>
+            <th>Товар</th>
+            <th>Бренд</th>
+            <th>Типоразмер</th>
+            <th class="text-end">Кол-во</th>
+            <th class="text-end">Резерв</th>
+            <th class="text-end">Доступно</th>
+            <th>Ед.</th>
+            {% if user.role in ['admin', 'storekeeper'] %}<th style="width:110px">Действия</th>{% endif %}
+            {% if user.role == 'admin' %}<th style="width:80px">Приёмка</th>{% endif %}
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in address_rows %}
+        {% set addr = row.address %}
+        {% set zone_name = addr.zone.name if addr.zone else '' %}
+
+        {% if row.locations %}
+            {% for loc in row.locations %}
+            {% set avail = (loc.quantity|float - loc.reserved_quantity|float)|int %}
+            {% set prod = loc.product %}
             <tr
-                data-zone="{{ loc.address.zone.name if loc.address and loc.address.zone else '' }}"
-                data-product="{{ (loc.product.name ~ ' ' ~ (loc.product.brand or '') ~ ' ' ~ (loc.product.tire_size or ''))|lower if loc.product else '' }}"
+                data-zone="{{ zone_name }}"
+                data-name="{{ prod.name|lower if prod else '' }}"
+                data-brand="{{ prod.brand|lower if prod and prod.brand else '' }}"
+                data-size="{{ prod.tire_size|lower if prod and prod.tire_size else '' }}"
+                data-addr-id="{{ addr.id }}"
             >
-                <td class="text-nowrap small">{{ loc.address.display_name if loc.address else '—' }}</td>
-                <td>
-                    {% if loc.product %}
-                    <a href="/products/{{ loc.product_id }}" class="text-dark">{{ loc.product.name }}</a>
-                    {% else %}—{% endif %}
+                {% if loop.first %}
+                <td rowspan="{{ row.rowspan }}" class="align-middle fw-bold small text-nowrap">
+                    {{ addr.display_name }}
                 </td>
-                <td class="small">{{ loc.product.brand if loc.product and loc.product.brand else '—' }}</td>
-                <td class="small">{{ loc.product.tire_size if loc.product and loc.product.tire_size else '—' }}</td>
+                {% endif %}
+                <td>{% if prod %}<a href="/products/{{ loc.product_id }}" class="text-dark">{{ prod.name }}</a>{% else %}—{% endif %}</td>
+                <td class="small">{{ prod.brand if prod and prod.brand else '—' }}</td>
+                <td class="small">{{ prod.tire_size if prod and prod.tire_size else '—' }}</td>
                 <td class="text-end num">{{ loc.quantity|int }}</td>
                 <td class="text-end num text-muted">{{ loc.reserved_quantity|int }}</td>
-                <td class="text-end num fw-bold">{{ (loc.quantity|float - loc.reserved_quantity|float)|int }}</td>
-                <td class="small">{{ loc.product.unit if loc.product else '—' }}</td>
+                <td class="text-end num fw-bold">{{ avail }}</td>
+                <td class="small">{{ prod.unit if prod else '—' }}</td>
+                {% if loop.first %}
+                {% if user.role in ['admin', 'storekeeper'] %}
+                <td rowspan="{{ row.rowspan }}" class="align-middle text-center">
+                    <button class="btn btn-outline-dark btn-sm btn-action"
+                        data-addr-id="{{ addr.id }}"
+                        data-addr-name="{{ addr.display_name }}"
+                        data-addr-prods='[{% for l in row.locations %}{"id":{{ l.product_id }},"name":"{{ l.product.name if l.product else '' }}","avail":{{ (l.quantity|float - l.reserved_quantity|float)|int }}}{% if not loop.last %},{% endif %}{% endfor %}]'>
+                        Действия
+                    </button>
+                </td>
+                {% endif %}
+                {% if user.role == 'admin' %}
+                <td rowspan="{{ row.rowspan }}" class="align-middle text-center">
+                    <button class="btn btn-outline-success btn-sm btn-receipt"
+                        data-addr-id="{{ addr.id }}"
+                        data-addr-name="{{ addr.display_name }}">
+                        +
+                    </button>
+                </td>
+                {% endif %}
+                {% endif %}
             </tr>
-            {% else %}
-            <tr><td colspan="8" class="text-muted">На складе нет товаров</td></tr>
             {% endfor %}
-            </tbody>
-        </table>
-        </div>
-    </div>
+        {% else %}
+            <tr
+                data-zone="{{ zone_name }}"
+                data-name=""
+                data-brand=""
+                data-size=""
+                data-addr-id="{{ addr.id }}"
+            >
+                <td class="fw-bold small text-nowrap">{{ addr.display_name }}</td>
+                <td class="text-muted">—</td>
+                <td>—</td>
+                <td>—</td>
+                <td class="text-end">—</td>
+                <td class="text-end">—</td>
+                <td class="text-end">—</td>
+                <td>—</td>
+                {% if user.role in ['admin', 'storekeeper'] %}
+                <td class="text-center">
+                    <button class="btn btn-outline-dark btn-sm btn-action"
+                        data-addr-id="{{ addr.id }}"
+                        data-addr-name="{{ addr.display_name }}"
+                        data-addr-prods='[]'>
+                        Действия
+                    </button>
+                </td>
+                {% endif %}
+                {% if user.role == 'admin' %}
+                <td class="text-center">
+                    <button class="btn btn-outline-success btn-sm btn-receipt"
+                        data-addr-id="{{ addr.id }}"
+                        data-addr-name="{{ addr.display_name }}">
+                        +
+                    </button>
+                </td>
+                {% endif %}
+            </tr>
+        {% endif %}
+    {% else %}
+    <tr><td colspan="10" class="text-muted">Адресов нет. Создайте адресную структуру.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
 
-    {% if user.role in ['admin', 'storekeeper'] %}
-    <div class="col-lg-4">
+{% if user.role in ['admin', 'storekeeper'] %}
+<div class="row g-3" id="action-panel" style="display:none !important">
+    <div class="col-lg-6">
         <div class="card border-dark">
-            <div class="card-header bg-dark text-white small">Прямое перемещение</div>
+            <div class="card-header bg-dark text-white small" id="action-panel-title">Действия</div>
             <div class="card-body">
-                <form method="post" action="/warehouse/move">
-                    <div class="mb-2">
+                <div class="alert alert-secondary py-1 small mb-3" id="action-info">—</div>
+                <form method="post" id="action-form">
+                    <input type="hidden" name="from_address_id" id="action-from-id">
+                    <input type="hidden" name="product_id" id="action-product-id">
+                    <div class="mb-2" id="product-select-block">
                         <label class="form-label fw-bold small text-uppercase">Товар *</label>
-                        <select name="product_id" id="move-product" class="form-select form-select-sm" required>
+                        <select name="product_id_sel" id="action-product-select" class="form-select form-select-sm">
                             <option value="">— выберите товар —</option>
-                            {% for p in products %}
-                            <option value="{{ p.id }}">{{ p.article }} — {{ p.name }}</option>
-                            {% endfor %}
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-bold small text-uppercase">Откуда *</label>
-                        <select name="from_address_id" id="move-from" class="form-select form-select-sm" required>
-                            <option value="">— адрес источника —</option>
-                            {% for addr in addresses %}
-                            <option value="{{ addr.id }}">{{ addr.display_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-bold small text-uppercase">Куда *</label>
-                        <select name="to_address_id" class="form-select form-select-sm" required>
+                    <div class="mb-2" id="to-addr-block">
+                        <label class="form-label fw-bold small text-uppercase">Куда (для перемещения) *</label>
+                        <select name="to_address_id" id="action-to-addr" class="form-select form-select-sm">
                             <option value="">— адрес назначения —</option>
                             {% for addr in addresses %}
                             <option value="{{ addr.id }}">{{ addr.display_name }}</option>
@@ -101,73 +165,189 @@
                     <div class="mb-2">
                         <label class="form-label fw-bold small text-uppercase">Количество *</label>
                         <div class="d-flex align-items-center gap-2">
-                            <input type="number" name="quantity" id="move-qty" class="form-control form-control-sm" min="0.01" step="0.01" required style="max-width:120px">
-                            <span id="move-available" class="small text-muted"></span>
+                            <input type="number" name="quantity" id="action-qty" class="form-control form-control-sm"
+                                min="0.01" step="0.01" required style="max-width:130px">
+                            <span id="action-avail" class="small text-muted"></span>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-uppercase">Комментарий</label>
                         <input type="text" name="comment" class="form-control form-control-sm">
                     </div>
-                    <button type="submit" class="btn btn-dark btn-sm w-100">Переместить</button>
+                    <div class="d-flex gap-2 flex-wrap" id="action-buttons">
+                        <button type="button" class="btn btn-dark btn-sm" id="btn-task" onclick="submitAction('/warehouse/task')">Создать задание</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="btn-move" onclick="submitAction('/warehouse/move')">Переместить напрямую</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="btn-writeoff" onclick="submitAction('/warehouse/writeoff')">Списать</button>
+                    </div>
                 </form>
             </div>
         </div>
+    </div>
+</div>
+{% endif %}
 
-        <div class="card border-secondary mt-3">
-            <div class="card-header small bg-secondary text-white">Перемещение через задание</div>
+{% if user.role == 'admin' %}
+<div class="row g-3 mt-1" id="receipt-panel" style="display:none !important">
+    <div class="col-lg-5">
+        <div class="card border-success">
+            <div class="card-header bg-dark text-white small">Прямая приёмка</div>
             <div class="card-body">
-                <p class="small text-muted mb-2">Создать задание на перемещение — кладовщик спланирует, грузчик выполнит.</p>
-                <a href="/tasks/new?type=move" class="btn btn-outline-dark btn-sm w-100">Создать задание на перемещение</a>
+                <div class="alert alert-secondary py-1 small mb-3" id="receipt-info">—</div>
+                <form method="post" action="/warehouse/receipt">
+                    <input type="hidden" name="address_id" id="receipt-addr-id">
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small text-uppercase">Товар *</label>
+                        <select name="product_id" class="form-select form-select-sm" required>
+                            <option value="">— выберите товар —</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">{{ p.article }} — {{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small text-uppercase">Количество *</label>
+                        <input type="number" name="quantity" class="form-control form-control-sm" min="0.01" step="0.01" required style="max-width:130px">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase">Накладная</label>
+                        <input type="text" name="comment" class="form-control form-control-sm">
+                    </div>
+                    <button type="submit" class="btn btn-dark btn-sm w-100">Принять товар</button>
+                </form>
             </div>
         </div>
     </div>
-    {% endif %}
 </div>
+{% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Фильтрация таблицы склада
-var whZone    = document.getElementById("wh-filter-zone");
-var whProduct = document.getElementById("wh-filter-product");
+var whZone  = document.getElementById("wh-filter-zone");
+var whName  = document.getElementById("wh-filter-name");
+var whBrand = document.getElementById("wh-filter-brand");
+var whSize  = document.getElementById("wh-filter-size");
 
 function filterWarehouse() {
-    var zone    = whZone    ? whZone.value    : "";
-    var product = whProduct ? whProduct.value.toLowerCase() : "";
-    document.querySelectorAll("#wh-table tbody tr[data-zone]").forEach(function(row) {
-        var ok =
-            (!zone    || row.dataset.zone    === zone) &&
-            (!product || (row.dataset.product || "").includes(product));
-        row.style.display = ok ? "" : "none";
+    var zone  = whZone  ? whZone.value             : "";
+    var name  = whName  ? whName.value.toLowerCase()  : "";
+    var brand = whBrand ? whBrand.value.toLowerCase() : "";
+    var size  = whSize  ? whSize.value.toLowerCase()  : "";
+
+    var addrGroups = {};
+    document.querySelectorAll("#wh-table tbody tr[data-addr-id]").forEach(function(row) {
+        var addrId = row.dataset.addrId;
+        if (!addrGroups[addrId]) addrGroups[addrId] = [];
+        addrGroups[addrId].push(row);
+    });
+
+    Object.values(addrGroups).forEach(function(rows) {
+        var addrZone = rows[0].dataset.zone || "";
+        var zoneOk = !zone || addrZone === zone;
+
+        var anyVisible = false;
+        rows.forEach(function(row) {
+            var rowName  = row.dataset.name  || "";
+            var rowBrand = row.dataset.brand || "";
+            var rowSize  = row.dataset.size  || "";
+            var ok = zoneOk &&
+                (!name  || rowName.includes(name))   &&
+                (!brand || rowBrand.includes(brand))  &&
+                (!size  || rowSize.includes(size));
+
+            if (ok) anyVisible = true;
+            row.style.display = ok ? "" : "none";
+        });
+
+        // Если ни одна строка адреса не видна — прячем все
+        if (!anyVisible) {
+            rows.forEach(function(r) { r.style.display = "none"; });
+        }
     });
 }
-if (whZone)    whZone.addEventListener("change", filterWarehouse);
-if (whProduct) whProduct.addEventListener("input",  filterWarehouse);
 
-// Показывать доступное количество при выборе товара + адреса источника
-var moveProduct = document.getElementById("move-product");
-var moveFrom    = document.getElementById("move-from");
-var moveAvail   = document.getElementById("move-available");
+[whZone, whName, whBrand, whSize].forEach(function(el) {
+    if (el) el.addEventListener("input", filterWarehouse);
+    if (el) el.addEventListener("change", filterWarehouse);
+});
 
-// Данные остатков для подсказки
-var stockData = {
-    {% for loc in locations %}
-    "{{ loc.product_id }}_{{ loc.address_id }}": {{ (loc.quantity|float - loc.reserved_quantity|float)|int }},
-    {% endfor %}
-};
+// Кнопка Действия
+document.querySelectorAll(".btn-action").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+        var addrId   = this.dataset.addrId;
+        var addrName = this.dataset.addrName;
+        var prods    = JSON.parse(this.dataset.addrProds || "[]");
 
-function updateAvailable() {
-    if (!moveProduct || !moveFrom || !moveAvail) return;
-    var key = moveProduct.value + "_" + moveFrom.value;
-    var avail = stockData[key];
-    if (avail !== undefined) {
-        moveAvail.textContent = "Доступно: " + avail;
-    } else {
-        moveAvail.textContent = "";
+        document.getElementById("action-from-id").value = addrId;
+        document.getElementById("action-info").textContent = "Адрес: " + addrName;
+
+        var select = document.getElementById("action-product-select");
+        select.innerHTML = '<option value="">— выберите товар —</option>';
+        prods.forEach(function(p) {
+            var opt = document.createElement("option");
+            opt.value = p.id;
+            opt.textContent = p.name + " (доступно: " + p.avail + ")";
+            opt.dataset.avail = p.avail;
+            select.appendChild(opt);
+        });
+
+        // Если товаров нет — скрыть кнопки перемещения/списания
+        var hasProds = prods.length > 0;
+        document.getElementById("btn-task").style.display    = hasProds ? "" : "none";
+        document.getElementById("btn-move").style.display    = hasProds ? "" : "none";
+        document.getElementById("btn-writeoff").style.display = hasProds ? "" : "none";
+        document.getElementById("to-addr-block").style.display = hasProds ? "" : "none";
+
+        var panel = document.getElementById("action-panel");
+        panel.style.cssText = "";
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+});
+
+// Обновить доступное кол-во при выборе товара
+document.getElementById("action-product-select") && document.getElementById("action-product-select").addEventListener("change", function() {
+    var opt = this.options[this.selectedIndex];
+    var avail = opt ? (opt.dataset.avail || "") : "";
+    document.getElementById("action-avail").textContent = avail ? "Доступно: " + avail : "";
+    document.getElementById("action-product-id").value = this.value;
+});
+
+// Сабмит формы действий
+function submitAction(action) {
+    var prodSel = document.getElementById("action-product-select");
+    document.getElementById("action-product-id").value = prodSel ? prodSel.value : "";
+
+    var isMove = action === "/warehouse/move" || action === "/warehouse/task";
+    var toAddr = document.getElementById("action-to-addr");
+
+    if (isMove && toAddr && !toAddr.value) {
+        alert("Выберите адрес назначения");
+        return;
     }
+    if (!document.getElementById("action-product-id").value) {
+        alert("Выберите товар");
+        return;
+    }
+
+    var form = document.getElementById("action-form");
+    form.action = action;
+    form.submit();
 }
-if (moveProduct) moveProduct.addEventListener("change", updateAvailable);
-if (moveFrom)    moveFrom.addEventListener("change",    updateAvailable);
+
+// Кнопка Приёмка
+document.querySelectorAll(".btn-receipt").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+        var addrId   = this.dataset.addrId;
+        var addrName = this.dataset.addrName;
+
+        document.getElementById("receipt-addr-id").value = addrId;
+        document.getElementById("receipt-info").textContent = "Адрес: " + addrName;
+
+        var panel = document.getElementById("receipt-panel");
+        panel.style.cssText = "";
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+});
 </script>
 {% endblock %}

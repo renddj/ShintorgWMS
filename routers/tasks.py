@@ -54,7 +54,7 @@ def task_new(
     db: Session = Depends(get_db),
 ):
     user = get_current_user(request, db)
-    if not user or user.role not in ("admin", "manager", "storekeeper"):
+    if not user or user.role not in ("admin", "manager"):
         return RedirectResponse("/dashboard", 302)
 
     task, error = create_task(db, task_type, product_id, quantity, user.id, comment or None, to_address_id)

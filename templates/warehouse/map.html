@@ -19,7 +19,18 @@
         <input type="text" id="wh-filter-name" class="form-control form-control-sm" placeholder="Название товара...">
     </div>
     <div class="col-md-3">
-        <input type="text" id="wh-filter-brand" class="form-control form-control-sm" placeholder="Бренд...">
+        <select id="wh-filter-brand" class="form-select form-select-sm">
+            <option value="">Все бренды</option>
+            {% set brands_seen = [] %}
+            {% for row in address_rows %}
+                {% for loc in row.locations %}
+                    {% if loc.product and loc.product.brand and loc.product.brand not in brands_seen %}
+                        {% set _ = brands_seen.append(loc.product.brand) %}
+                        <option value="{{ loc.product.brand|lower }}">{{ loc.product.brand }}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </select>
     </div>
     <div class="col-md-3">
         <input type="text" id="wh-filter-size" class="form-control form-control-sm" placeholder="Типоразмер...">
@@ -46,7 +57,6 @@
     {% for row in address_rows %}
         {% set addr = row.address %}
         {% set zone_name = addr.zone.name if addr.zone else '' %}
-
         {% if row.locations %}
             {% for loc in row.locations %}
             {% set avail = (loc.quantity|float - loc.reserved_quantity|float)|int %}
@@ -57,12 +67,15 @@
                 data-brand="{{ prod.brand|lower if prod and prod.brand else '' }}"
                 data-size="{{ prod.tire_size|lower if prod and prod.tire_size else '' }}"
                 data-addr-id="{{ addr.id }}"
+                data-first="{{ 'yes' if loop.first else 'no' }}"
+                data-prod-id="{{ loc.product_id if loc.product else '' }}"
+                data-prod-name="{{ loc.product.name | replace('"', ' ') | replace("'", ' ') if loc.product else '' }}"
+                data-prod-avail="{{ (loc.quantity|float - loc.reserved_quantity|float)|int }}"
+                class="{% if loop.first %}addr-first{% else %}addr-cont{% endif %}"
             >
-                {% if loop.first %}
-                <td rowspan="{{ row.rowspan }}" class="align-middle fw-bold small text-nowrap">
-                    {{ addr.display_name }}
+                <td class="fw-bold small text-nowrap {% if not loop.first %}text-muted addr-repeat{% endif %}" data-addr-name="{{ addr.display_name }}">
+                    {% if loop.first %}{{ addr.display_name }}{% else %}&nbsp;{% endif %}
                 </td>
-                {% endif %}
                 <td>{% if prod %}<a href="/products/{{ loc.product_id }}" class="text-dark">{{ prod.name }}</a>{% else %}—{% endif %}</td>
                 <td class="small">{{ prod.brand if prod and prod.brand else '—' }}</td>
                 <td class="small">{{ prod.tire_size if prod and prod.tire_size else '—' }}</td>
@@ -70,41 +83,41 @@
                 <td class="text-end num text-muted">{{ loc.reserved_quantity|int }}</td>
                 <td class="text-end num fw-bold">{{ avail }}</td>
                 <td class="small">{{ prod.unit if prod else '—' }}</td>
-                {% if loop.first %}
                 {% if user.role in ['admin', 'storekeeper'] %}
-                <td rowspan="{{ row.rowspan }}" class="align-middle text-center">
+                <td class="text-center {% if not loop.first %}addr-btn-empty{% endif %}">
+                    {% if loop.first %}
                     <button class="btn btn-outline-dark btn-sm btn-action"
                         data-addr-id="{{ addr.id }}"
-                        data-addr-name="{{ addr.display_name }}"
-                        data-addr-prods='[{% for l in row.locations %}{"id":{{ l.product_id }},"name":"{{ l.product.name if l.product else '' }}","avail":{{ (l.quantity|float - l.reserved_quantity|float)|int }}}{% if not loop.last %},{% endif %}{% endfor %}]'>
+                        data-addr-name="{{ addr.display_name }}">
                         Действия
                     </button>
+                    {% endif %}
                 </td>
                 {% endif %}
                 {% if user.role == 'admin' %}
-                <td rowspan="{{ row.rowspan }}" class="align-middle text-center">
+                <td class="text-center {% if not loop.first %}addr-btn-empty{% endif %}">
+                    {% if loop.first %}
                     <button class="btn btn-outline-success btn-sm btn-receipt"
                         data-addr-id="{{ addr.id }}"
                         data-addr-name="{{ addr.display_name }}">
                         +
                     </button>
+                    {% endif %}
                 </td>
-                {% endif %}
                 {% endif %}
             </tr>
             {% endfor %}
         {% else %}
             <tr
                 data-zone="{{ zone_name }}"
-                data-name=""
-                data-brand=""
-                data-size=""
+                data-name="" data-brand="" data-size=""
                 data-addr-id="{{ addr.id }}"
+                data-first="yes"
+                class="addr-first"
             >
-                <td class="fw-bold small text-nowrap">{{ addr.display_name }}</td>
+                <td class="fw-bold small text-nowrap" data-addr-name="{{ addr.display_name }}">{{ addr.display_name }}</td>
                 <td class="text-muted">—</td>
-                <td>—</td>
-                <td>—</td>
+                <td>—</td><td>—</td>
                 <td class="text-end">—</td>
                 <td class="text-end">—</td>
                 <td class="text-end">—</td>
@@ -113,8 +126,7 @@
                 <td class="text-center">
                     <button class="btn btn-outline-dark btn-sm btn-action"
                         data-addr-id="{{ addr.id }}"
-                        data-addr-name="{{ addr.display_name }}"
-                        data-addr-prods='[]'>
+                        data-addr-name="{{ addr.display_name }}">
                         Действия
                     </button>
                 </td>
@@ -230,40 +242,64 @@ var whBrand = document.getElementById("wh-filter-brand");
 var whSize  = document.getElementById("wh-filter-size");
 
 function filterWarehouse() {
-    var zone  = whZone  ? whZone.value             : "";
+    var zone  = whZone  ? whZone.value.toLowerCase()  : "";
     var name  = whName  ? whName.value.toLowerCase()  : "";
     var brand = whBrand ? whBrand.value.toLowerCase() : "";
     var size  = whSize  ? whSize.value.toLowerCase()  : "";
 
+    // Группируем строки по адресу
     var addrGroups = {};
+    var addrOrder  = [];
     document.querySelectorAll("#wh-table tbody tr[data-addr-id]").forEach(function(row) {
-        var addrId = row.dataset.addrId;
-        if (!addrGroups[addrId]) addrGroups[addrId] = [];
-        addrGroups[addrId].push(row);
+        var id = row.dataset.addrId;
+        if (!addrGroups[id]) { addrGroups[id] = []; addrOrder.push(id); }
+        addrGroups[id].push(row);
     });
 
-    Object.values(addrGroups).forEach(function(rows) {
-        var addrZone = rows[0].dataset.zone || "";
-        var zoneOk = !zone || addrZone === zone;
+    addrOrder.forEach(function(addrId) {
+        var rows     = addrGroups[addrId];
+        var addrZone = (rows[0].dataset.zone || "").toLowerCase();
+        var zoneOk   = !zone || addrZone === zone;
 
-        var anyVisible = false;
+        // Определяем какие строки товаров проходят фильтр
+        var visibleRows = [];
         rows.forEach(function(row) {
             var rowName  = row.dataset.name  || "";
             var rowBrand = row.dataset.brand || "";
             var rowSize  = row.dataset.size  || "";
-            var ok = zoneOk &&
-                (!name  || rowName.includes(name))   &&
-                (!brand || rowBrand.includes(brand))  &&
-                (!size  || rowSize.includes(size));
-
-            if (ok) anyVisible = true;
+            // Пустая строка (адрес без товаров) видна если зона подходит
+            var isEmpty  = rowName === "" && rowBrand === "" && rowSize === "";
+            var ok = zoneOk && (
+                isEmpty ||
+                ((!name  || rowName.includes(name))  &&
+                 (!brand || rowBrand.includes(brand)) &&
+                 (!size  || rowSize.includes(size)))
+            );
             row.style.display = ok ? "" : "none";
+            if (ok) visibleRows.push(row);
         });
 
-        // Если ни одна строка адреса не видна — прячем все
-        if (!anyVisible) {
+        // Если зона не подходит — скрыть всё
+        if (!zoneOk) {
             rows.forEach(function(r) { r.style.display = "none"; });
+            return;
         }
+
+        // Первая видимая строка должна показывать адрес и кнопки
+        rows.forEach(function(row) {
+            var addrCell = row.cells[0];
+            var isFirst  = visibleRows.length > 0 && row === visibleRows[0];
+            // Показать адрес только в первой видимой строке
+            if (row.style.display !== "none") {
+                if (isFirst) {
+                    addrCell.style.fontWeight = "bold";
+                    addrCell.innerHTML = addrCell.dataset.addrName || addrCell.innerHTML;
+                } else {
+                    addrCell.innerHTML = "&nbsp;";
+                    addrCell.style.fontWeight = "normal";
+                }
+            }
+        });
     });
 }
 
@@ -272,12 +308,22 @@ function filterWarehouse() {
     if (el) el.addEventListener("change", filterWarehouse);
 });
 
-// Кнопка Действия
+// Кнопка Действия — собираем товары из строк таблицы
 document.querySelectorAll(".btn-action").forEach(function(btn) {
     btn.addEventListener("click", function() {
         var addrId   = this.dataset.addrId;
         var addrName = this.dataset.addrName;
-        var prods    = JSON.parse(this.dataset.addrProds || "[]");
+
+        // Собираем товары с этого адреса из строк таблицы
+        var prods = [];
+        document.querySelectorAll("#wh-table tbody tr[data-addr-id='" + addrId + "']").forEach(function(row) {
+            var prodId   = row.dataset.prodId;
+            var prodName = row.dataset.prodName;
+            var avail    = row.dataset.prodAvail;
+            if (prodId && row.style.display !== "none") {
+                prods.push({ id: prodId, name: prodName, avail: avail });
+            }
+        });
 
         document.getElementById("action-from-id").value = addrId;
         document.getElementById("action-info").textContent = "Адрес: " + addrName;
@@ -292,10 +338,9 @@ document.querySelectorAll(".btn-action").forEach(function(btn) {
             select.appendChild(opt);
         });
 
-        // Если товаров нет — скрыть кнопки перемещения/списания
         var hasProds = prods.length > 0;
-        document.getElementById("btn-task").style.display    = hasProds ? "" : "none";
-        document.getElementById("btn-move").style.display    = hasProds ? "" : "none";
+        document.getElementById("btn-task").style.display     = hasProds ? "" : "none";
+        document.getElementById("btn-move").style.display     = hasProds ? "" : "none";
         document.getElementById("btn-writeoff").style.display = hasProds ? "" : "none";
         document.getElementById("to-addr-block").style.display = hasProds ? "" : "none";
 

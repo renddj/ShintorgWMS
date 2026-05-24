@@ -24,7 +24,7 @@
 Пользователи
 ![Пользователи](screenshots/users.png)
 Адресная структура
-![Адресная структура](screenshots/address.png)
+![Адресная структура](screenshots/addreses.png)
 ---
 
 ---

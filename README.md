@@ -3,6 +3,86 @@
 Веб-приложение для управления складом шин. Разработано для ООО «Шинторг».
 
 ---
+## Скриншоты
+
+Экран входа
+![Экран входа](screenshots/login.png)
+Список товаров
+![Список товаров](screenshots/product.png)
+Карточка товара
+![Карточка товара](screenshots/product_card.png)
+Карта склада
+![Карта склада](screenshots/sklad_map.png)
+Задания
+![Задания](screenshots/tasks.png)
+Карточка задания
+![Карточка задания](screenshots/task_card.png)
+История движения
+![История движения](screenshots/history.png)
+Экспорт
+![Экспорт](screenshots/export.png)
+Пользователи
+![Пользователи](screenshots/users.png)
+Адресная структура
+![Адресная структура](screenshots/address.png)
+---
+
+---
+
+## Структура проекта
+
+```
+shintorg_v2/
+├── main.py                  # Точка входа FastAPI
+├── database.py              # Подключение к БД
+├── config.py                # Конфигурация из переменных окружения
+├── create_admin.py          # Скрипт создания первого администратора
+├── seed.py                  # Скрипт заполнения тестовыми данными
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+│
+├── models/                  # SQLAlchemy модели
+│   ├── user.py
+│   ├── address.py           # Zone, Row, Shelf, Level, StorageAddress
+│   ├── product.py           # Product, StockLocation
+│   ├── task.py              # Task, TaskLine
+│   └── stock_operation.py
+│
+├── routers/                 # FastAPI роутеры
+│   ├── auth.py
+│   ├── dashboard.py
+│   ├── products.py
+│   ├── addresses.py
+│   ├── tasks.py
+│   ├── stock.py
+│   ├── warehouse.py         # Карта склада
+│   ├── export.py
+│   └── users.py
+│
+├── services/                # Бизнес-логика
+│   ├── auth_service.py
+│   ├── stock_service.py     # Приёмка, списание, перемещение
+│   ├── task_service.py      # Создание, планирование, закрытие заданий
+│   └── export_service.py
+│
+├── templates/               # Jinja2 шаблоны
+│   ├── base.html
+│   ├── login.html
+│   ├── dashboard/
+│   ├── products/
+│   ├── tasks/
+│   ├── addresses/
+│   ├── warehouse/
+│   ├── stock/
+│   ├── export/
+│   └── users/
+│
+└── static/
+    ├── css/custom.css
+    ├── js/main.js
+    └── vendor/bootstrap/    # Bootstrap 5.3 (локально)
+```
 
 ## Стек технологий
 
@@ -144,88 +224,6 @@ docker compose exec -T db psql -U shintorg shintorg_wms < backup_20240101_1200.s
 - Форматы: Excel (.xlsx, два листа — Отгрузки и Приёмки) и CSV (с BOM для корректного открытия в Excel)
 - Фильтр по типу операций
 
----
-
-## Структура проекта
-
-```
-shintorg_v2/
-├── main.py                  # Точка входа FastAPI
-├── database.py              # Подключение к БД
-├── config.py                # Конфигурация из переменных окружения
-├── create_admin.py          # Скрипт создания первого администратора
-├── seed.py                  # Скрипт заполнения тестовыми данными
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-│
-├── models/                  # SQLAlchemy модели
-│   ├── user.py
-│   ├── address.py           # Zone, Row, Shelf, Level, StorageAddress
-│   ├── product.py           # Product, StockLocation
-│   ├── task.py              # Task, TaskLine
-│   └── stock_operation.py
-│
-├── routers/                 # FastAPI роутеры
-│   ├── auth.py
-│   ├── dashboard.py
-│   ├── products.py
-│   ├── addresses.py
-│   ├── tasks.py
-│   ├── stock.py
-│   ├── warehouse.py         # Карта склада
-│   ├── export.py
-│   └── users.py
-│
-├── services/                # Бизнес-логика
-│   ├── auth_service.py
-│   ├── stock_service.py     # Приёмка, списание, перемещение
-│   ├── task_service.py      # Создание, планирование, закрытие заданий
-│   └── export_service.py
-│
-├── templates/               # Jinja2 шаблоны
-│   ├── base.html
-│   ├── login.html
-│   ├── dashboard/
-│   ├── products/
-│   ├── tasks/
-│   ├── addresses/
-│   ├── warehouse/
-│   ├── stock/
-│   ├── export/
-│   └── users/
-│
-└── static/
-    ├── css/custom.css
-    ├── js/main.js
-    └── vendor/bootstrap/    # Bootstrap 5.3 (локально)
-```
-
----
-
-## Скриншоты
-
-Экран входа
-![Экран входа](screenshots/login.png)
-Список товаров
-![Список товаров](screenshots/product.png)
-Карточка товара
-![Карточка товара](screenshots/product_card.png)
-Карта склада
-![Карта склада](screenshots/sklad_map.png)
-Задания
-![Задания](screenshots/tasks.png)
-Карточка задания
-![Карточка задания](screenshots/task_card.png)
-История движения
-![История движения](screenshots/history.png)
-Экспорт
-![Экспорт](screenshots/export.png)
-Пользователи
-![Пользователи](screenshots/users.png)
-Адресная структура
-![Адресная структура](screenshots/address.png)
----
 
 ## Переменные окружения
 

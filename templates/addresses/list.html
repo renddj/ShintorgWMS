@@ -1,198 +1,299 @@
 {% extends "base.html" %}
 {% block title %}Адресная структура{% endblock %}
 {% block content %}
-<h5 class="mb-3 border-bottom pb-2">Адресная структура склада</h5>
+<div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+    <h5 class="mb-0">Адресная структура склада</h5>
+</div>
 
-<div class="row g-3">
-    <div class="col-md-7">
-        <div class="card border-dark">
-            <div class="card-header bg-dark text-white small">Адреса хранения ({{ addresses|length }})</div>
-            <div class="card-body p-0">
-                {% if addresses %}
-                <div class="table-responsive">
-                <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-secondary"><tr><th>#</th><th>Адрес</th><th>Тип</th></tr></thead>
-                    <tbody>
-                    {% for addr in addresses %}
-                    <tr>
-                        <td>{{ addr.id }}</td>
-                        <td>{{ addr.display_name }}</td>
-                        <td>{% if addr.address_type == 'zone_row' %}Зона/Ряд{% else %}Стеллаж{% endif %}</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-                {% else %}
-                <p class="text-muted p-3 mb-0 small">Адресов нет. Сначала создайте зоны и ряды.</p>
-                {% endif %}
-            </div>
-        </div>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 
-        <div class="card border-secondary mt-3">
-            <div class="card-header small">Зоны и ряды</div>
-            <div class="card-body small">
-                {% for z in zones %}
-                <div class="mb-1">
-                    <strong>Зона {{ z.name }}</strong>
-                    {% if z.rows %} — ряды: {% for r in z.rows %}{{ r.name }}{% if not loop.last %}, {% endif %}{% endfor %}
-                    {% else %} — <span class="text-muted">рядов нет</span>{% endif %}
-                </div>
-                {% else %}
-                <span class="text-muted">Зон нет</span>
-                {% endfor %}
-            </div>
+<div style="max-width:800px">
+
+{% for zone in zones %}
+<div class="card border-dark mb-2" id="zone-{{ zone.id }}">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-1">
+        <span class="fw-bold">
+            <span class="toggle-zone" style="cursor:pointer" data-zone="{{ zone.id }}">▼</span>
+            Зона {{ zone.name }}
+        </span>
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-outline-light btn-sm py-0" onclick="showAddRow({{ zone.id }}, '{{ zone.name }}')">+ ряд</button>
+            <form method="post" action="/addresses/zone/{{ zone.id }}/delete" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger btn-sm py-0"
+                    onclick="return confirm('Удалить зону «{{ zone.name }}»?')">удалить</button>
+            </form>
         </div>
     </div>
 
-    <div class="col-md-5">
-        <div class="accordion" id="addrAccordion">
-
-            <div class="accordion-item border-dark">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colZone">Добавить зону</button>
-                </h2>
-                <div id="colZone" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
-                    <div class="accordion-body py-2">
-                        <form method="post" action="/addresses/zone/new" class="row g-2">
-                            <div class="col-8"><input type="text" name="name" class="form-control form-control-sm" placeholder="Название зоны (А, Б...)" required></div>
-                            <div class="col-4"><button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button></div>
-                        </form>
-                    </div>
-                </div>
+    <div class="card-body py-2 zone-body" id="zone-body-{{ zone.id }}">
+        {# Inline форма добавления ряда #}
+        <div id="add-row-form-{{ zone.id }}" style="display:none" class="mb-2">
+            <div class="d-flex gap-2 align-items-center">
+                <input type="text" id="add-row-input-{{ zone.id }}" class="form-control form-control-sm" placeholder="Название ряда" style="max-width:200px">
+                <button class="btn btn-dark btn-sm" onclick="submitAddRow({{ zone.id }})">Добавить</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="hideAddRow({{ zone.id }})">Отмена</button>
             </div>
-
-            <div class="accordion-item border-dark">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colRow">Добавить ряд</button>
-                </h2>
-                <div id="colRow" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
-                    <div class="accordion-body py-2">
-                        <form method="post" action="/addresses/row/new" class="row g-2">
-                            <div class="col-4">
-                                <select name="zone_id" class="form-select form-select-sm" required>
-                                    <option value="">-- зона --</option>
-                                    {% for z in zones %}<option value="{{ z.id }}">{{ z.name }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-4"><input type="text" name="name" class="form-control form-control-sm" placeholder="Номер ряда" required></div>
-                            <div class="col-4"><button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button></div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item border-dark">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colShelf">Добавить стеллаж</button>
-                </h2>
-                <div id="colShelf" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
-                    <div class="accordion-body py-2">
-                        <form method="post" action="/addresses/shelf/new" class="row g-2">
-                            <div class="col-5">
-                                <select name="zone_id" id="shelf-zone-select" class="form-select form-select-sm" required>
-                                    <option value="">-- зона --</option>
-                                    {% for z in zones %}<option value="{{ z.id }}">{{ z.name }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-5">
-                                <select name="row_id" id="shelf-row-select" class="form-select form-select-sm" required>
-                                    <option value="">-- ряд --</option>
-                                </select>
-                            </div>
-                            <div class="col-6 mt-1">
-                                <input type="text" name="name" class="form-control form-control-sm" placeholder="Название стеллажа (С1)" required>
-                            </div>
-                            <div class="col-6 mt-1">
-                                <button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item border-dark">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colLevel">Добавить уровень</button>
-                </h2>
-                <div id="colLevel" class="accordion-collapse collapse" data-bs-parent="#addrAccordion">
-                    <div class="accordion-body py-2">
-                        <form method="post" action="/addresses/level/new" class="row g-2">
-                            <div class="col-4">
-                                <select id="level-zone-select" class="form-select form-select-sm">
-                                    <option value="">-- зона --</option>
-                                    {% for z in zones %}<option value="{{ z.id }}">{{ z.name }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-4">
-                                <select id="level-row-select" class="form-select form-select-sm">
-                                    <option value="">-- ряд --</option>
-                                </select>
-                            </div>
-                            <div class="col-4">
-                                <select name="shelf_id" id="level-shelf-select" class="form-select form-select-sm" required>
-                                    <option value="">-- стеллаж --</option>
-                                </select>
-                            </div>
-                            <div class="col-6 mt-1">
-                                <input type="text" name="name" class="form-control form-control-sm" placeholder="Название уровня (У1)" required>
-                            </div>
-                            <div class="col-6 mt-1">
-                                <button type="submit" class="btn btn-dark btn-sm w-100">Добавить</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item border-dark">
-                <h2 class="accordion-header">
-                    <button class="accordion-button bg-dark text-white py-2 small" type="button" data-bs-toggle="collapse" data-bs-target="#colAddr">Создать адрес хранения</button>
-                </h2>
-                <div id="colAddr" class="accordion-collapse collapse show" data-bs-parent="#addrAccordion">
-                    <div class="accordion-body py-2">
-                        <form method="post" action="/addresses/address/new" class="row g-2">
-                            <div class="col-12">
-                                <label class="form-label small fw-bold text-uppercase">Тип адреса</label>
-                                <select name="address_type" id="addr-type" class="form-select form-select-sm" required>
-                                    <option value="zone_row">Зона + Ряд</option>
-                                    <option value="zone_row_shelf_level">Зона + Ряд + Стеллаж + Уровень</option>
-                                </select>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small fw-bold text-uppercase">Зона</label>
-                                <select name="zone_id" id="zone_id" class="form-select form-select-sm" required>
-                                    <option value="">-- зона --</option>
-                                    {% for z in zones %}<option value="{{ z.id }}">{{ z.name }}</option>{% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small fw-bold text-uppercase">Ряд</label>
-                                <select name="row_id" id="row_id" class="form-select form-select-sm" required>
-                                    <option value="">-- выберите зону --</option>
-                                </select>
-                            </div>
-                            <div class="col-6" id="shelf-row" style="display:none">
-                                <label class="form-label small fw-bold text-uppercase">Стеллаж</label>
-                                <select name="shelf_id" id="shelf_id" class="form-select form-select-sm">
-                                    <option value="">-- стеллаж --</option>
-                                </select>
-                            </div>
-                            <div class="col-6" id="level-row" style="display:none">
-                                <label class="form-label small fw-bold text-uppercase">Уровень</label>
-                                <select name="level_id" id="level_id" class="form-select form-select-sm">
-                                    <option value="">-- уровень --</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-dark btn-sm">Создать адрес</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
         </div>
+
+        {% for row in zone.rows %}
+        <div class="ms-2 mb-1" id="row-{{ row.id }}">
+            <div class="d-flex align-items-center gap-2 py-1 border-bottom">
+                <span class="small fw-bold">Ряд {{ row.name }}</span>
+                {% if row.address %}
+                <span class="badge bg-secondary small">адрес</span>
+                {% endif %}
+                <div class="ms-auto d-flex gap-1">
+                    <button class="btn btn-outline-dark btn-sm py-0 px-2"
+                        onclick="showAddShelf({{ row.id }}, '{{ row.name }}', {{ zone.id }}, '{{ zone.name }}')">+ стеллаж</button>
+                    <form method="post" action="/addresses/row/{{ row.id }}/delete" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2"
+                            onclick="return confirm('Удалить ряд «{{ row.name }}»?')">удалить</button>
+                    </form>
+                </div>
+            </div>
+
+            {# Inline форма добавления стеллажа #}
+            <div id="add-shelf-form-{{ row.id }}" style="display:none" class="ms-3 mt-1 mb-1">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <input type="text" id="add-shelf-input-{{ row.id }}" class="form-control form-control-sm" placeholder="Название стеллажа" style="max-width:200px">
+                    <button class="btn btn-dark btn-sm" onclick="submitAddShelf({{ row.id }})">Добавить стеллаж</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="hideAddShelf({{ row.id }})">Отмена</button>
+                </div>
+                {# После создания стеллажа — форма добавления уровней #}
+                <div id="add-levels-form-{{ row.id }}" style="display:none" class="mt-2 p-2 border border-warning rounded">
+                    <div class="small fw-bold mb-1 text-warning">Добавьте хотя бы один уровень для стеллажа <span id="shelf-name-label-{{ row.id }}"></span></div>
+                    <div id="levels-list-{{ row.id }}" class="mb-2"></div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text" id="add-level-input-{{ row.id }}" class="form-control form-control-sm" placeholder="Название уровня" style="max-width:200px">
+                        <button class="btn btn-outline-dark btn-sm" onclick="submitAddLevel({{ row.id }})">+ уровень</button>
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-dark btn-sm" id="done-levels-btn-{{ row.id }}" disabled onclick="doneLevels({{ row.id }})">Готово</button>
+                    </div>
+                </div>
+            </div>
+
+            {# Стеллажи #}
+            {% for shelf in row.shelves %}
+            <div class="ms-3 mt-1" id="shelf-{{ shelf.id }}">
+                <div class="d-flex align-items-center gap-2 py-1 border-bottom border-secondary">
+                    <span class="small text-muted">Стеллаж {{ shelf.name }}</span>
+                    <div class="ms-auto d-flex gap-1">
+                        <button class="btn btn-outline-dark btn-sm py-0 px-2"
+                            onclick="showAddLevelExisting({{ shelf.id }}, '{{ shelf.name }}', {{ row.id }})">+ уровень</button>
+                        <form method="post" action="/addresses/shelf/{{ shelf.id }}/delete" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2"
+                                onclick="return confirm('Удалить стеллаж «{{ shelf.name }}»?')">удалить</button>
+                        </form>
+                    </div>
+                </div>
+
+                {# Inline форма добавления уровня к существующему стеллажу #}
+                <div id="add-level-existing-{{ shelf.id }}" style="display:none" class="ms-3 mt-1 mb-1">
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text" id="add-level-existing-input-{{ shelf.id }}" class="form-control form-control-sm" placeholder="Название уровня" style="max-width:200px">
+                        <button class="btn btn-dark btn-sm" onclick="submitAddLevelExisting({{ shelf.id }}, {{ row.id }})">Добавить</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="hideAddLevelExisting({{ shelf.id }})">Отмена</button>
+                    </div>
+                </div>
+
+                {# Уровни #}
+                {% for level in shelf.levels %}
+                <div class="ms-3 d-flex align-items-center gap-2 py-1" id="level-{{ level.id }}">
+                    <span class="small">Уровень {{ level.name }}</span>
+                    <span class="badge bg-secondary" style="font-size:10px">адрес</span>
+                    <form method="post" action="/addresses/level/{{ level.id }}/delete" class="d-inline ms-auto">
+                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2"
+                            onclick="return confirm('Удалить уровень «{{ level.name }}»?')">удалить</button>
+                    </form>
+                </div>
+                {% endfor %}
+                <div id="levels-container-{{ shelf.id }}"></div>
+            </div>
+            {% endfor %}
+            <div id="shelves-container-{{ row.id }}"></div>
+        </div>
+        {% else %}
+        <div class="text-muted small ms-2">Рядов нет. Нажмите «+ ряд» чтобы добавить.</div>
+        {% endfor %}
     </div>
 </div>
+{% else %}
+<div class="text-muted">Зон нет.</div>
+{% endfor %}
+
+{# Форма добавления зоны #}
+<div class="mt-3">
+    <div id="add-zone-form" style="display:none" class="mb-2">
+        <div class="d-flex gap-2 align-items-center">
+            <input type="text" id="add-zone-input" class="form-control form-control-sm" placeholder="Название зоны" style="max-width:200px">
+            <button class="btn btn-dark btn-sm" onclick="submitAddZone()">Добавить зону</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="hideAddZone()">Отмена</button>
+        </div>
+    </div>
+    <button class="btn btn-dark btn-sm" onclick="showAddZone()">+ Добавить зону</button>
+</div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Зоны ─────────────────────────────────────────────────────────────────────
+function showAddZone() {
+    document.getElementById("add-zone-form").style.display = "";
+    document.getElementById("add-zone-input").focus();
+}
+function hideAddZone() { document.getElementById("add-zone-form").style.display = "none"; }
+function submitAddZone() {
+    var name = document.getElementById("add-zone-input").value.trim();
+    if (!name) return;
+    var form = document.createElement("form");
+    form.method = "post"; form.action = "/addresses/zone/new";
+    var inp = document.createElement("input");
+    inp.type = "hidden"; inp.name = "name"; inp.value = name;
+    form.appendChild(inp); document.body.appendChild(form); form.submit();
+}
+
+// ── Сворачивание зон ──────────────────────────────────────────────────────────
+document.querySelectorAll(".toggle-zone").forEach(function(el) {
+    el.addEventListener("click", function() {
+        var zoneId = this.dataset.zone;
+        var body = document.getElementById("zone-body-" + zoneId);
+        if (body.style.display === "none") {
+            body.style.display = ""; this.textContent = "▼";
+        } else {
+            body.style.display = "none"; this.textContent = "▶";
+        }
+    });
+});
+
+// ── Ряды ─────────────────────────────────────────────────────────────────────
+function showAddRow(zoneId, zoneName) {
+    document.getElementById("add-row-form-" + zoneId).style.display = "";
+    document.getElementById("add-row-input-" + zoneId).focus();
+}
+function hideAddRow(zoneId) {
+    document.getElementById("add-row-form-" + zoneId).style.display = "none";
+}
+function submitAddRow(zoneId) {
+    var name = document.getElementById("add-row-input-" + zoneId).value.trim();
+    if (!name) return;
+    var form = document.createElement("form");
+    form.method = "post"; form.action = "/addresses/row/new";
+    [["zone_id", zoneId], ["name", name]].forEach(function(p) {
+        var inp = document.createElement("input");
+        inp.type = "hidden"; inp.name = p[0]; inp.value = p[1];
+        form.appendChild(inp);
+    });
+    document.body.appendChild(form); form.submit();
+}
+
+// ── Стеллажи (новый) ──────────────────────────────────────────────────────────
+var _currentShelfId = {};  // rowId -> shelfId (только что созданного)
+
+function showAddShelf(rowId, rowName, zoneId, zoneName) {
+    document.getElementById("add-shelf-form-" + rowId).style.display = "";
+    document.getElementById("add-shelf-input-" + rowId).focus();
+}
+function hideAddShelf(rowId) {
+    document.getElementById("add-shelf-form-" + rowId).style.display = "none";
+    document.getElementById("add-levels-form-" + rowId).style.display = "none";
+}
+
+function submitAddShelf(rowId) {
+    var name = document.getElementById("add-shelf-input-" + rowId).value.trim();
+    if (!name) return;
+    fetch("/addresses/shelf/new", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "row_id=" + rowId + "&name=" + encodeURIComponent(name)
+    })
+    .then(function(r) {
+        if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+        return r.json();
+    })
+    .then(function(data) {
+        _currentShelfId[rowId] = data.shelf_id;
+        document.getElementById("add-shelf-input-" + rowId).disabled = true;
+        document.getElementById("shelf-name-label-" + rowId).textContent = data.shelf_name;
+        document.getElementById("add-levels-form-" + rowId).style.display = "";
+        document.getElementById("levels-list-" + rowId).innerHTML = "";
+        document.getElementById("done-levels-btn-" + rowId).disabled = true;
+        document.getElementById("add-level-input-" + rowId).focus();
+    })
+    .catch(function(e) { alert("Ошибка: " + e.message); });
+}
+
+function submitAddLevel(rowId) {
+    var shelfId = _currentShelfId[rowId];
+    if (!shelfId) return;
+    var name = document.getElementById("add-level-input-" + rowId).value.trim();
+    if (!name) return;
+    fetch("/addresses/level/new", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "shelf_id=" + shelfId + "&name=" + encodeURIComponent(name)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var list = document.getElementById("levels-list-" + rowId);
+        var item = document.createElement("div");
+        item.className = "small text-success";
+        item.textContent = "✓ Уровень " + data.level_name + " (" + data.display_name + ")";
+        list.appendChild(item);
+        document.getElementById("add-level-input-" + rowId).value = "";
+        document.getElementById("add-level-input-" + rowId).focus();
+        document.getElementById("done-levels-btn-" + rowId).disabled = false;
+    });
+}
+
+function doneLevels(rowId) {
+    location.reload();
+}
+
+// ── Уровни к существующему стеллажу ──────────────────────────────────────────
+function showAddLevelExisting(shelfId, shelfName, rowId) {
+    document.getElementById("add-level-existing-" + shelfId).style.display = "";
+    document.getElementById("add-level-existing-input-" + shelfId).focus();
+}
+function hideAddLevelExisting(shelfId) {
+    document.getElementById("add-level-existing-" + shelfId).style.display = "none";
+}
+function submitAddLevelExisting(shelfId, rowId) {
+    var name = document.getElementById("add-level-existing-input-" + shelfId).value.trim();
+    if (!name) return;
+    fetch("/addresses/level/new", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: "shelf_id=" + shelfId + "&name=" + encodeURIComponent(name)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var container = document.getElementById("levels-container-" + shelfId);
+        var item = document.createElement("div");
+        item.className = "ms-3 d-flex align-items-center gap-2 py-1";
+        item.id = "level-" + data.level_id;
+        item.innerHTML = '<span class="small">Уровень ' + data.level_name + '</span>' +
+            '<span class="badge bg-secondary" style="font-size:10px">адрес</span>' +
+            '<form method="post" action="/addresses/level/' + data.level_id + '/delete" class="d-inline ms-auto">' +
+            '<button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" ' +
+            'onclick="return confirm(\'Удалить уровень?\')">удалить</button></form>';
+        container.appendChild(item);
+        document.getElementById("add-level-existing-input-" + shelfId).value = "";
+        document.getElementById("add-level-existing-input-" + shelfId).focus();
+    });
+}
+
+// Enter для всех input
+document.querySelectorAll("input[type=text]").forEach(function(inp) {
+    inp.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            var btn = this.parentElement.querySelector("button.btn-dark");
+            if (btn) btn.click();
+        }
+    });
+});
+</script>
 {% endblock %}

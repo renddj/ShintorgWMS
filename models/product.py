@@ -78,4 +78,4 @@ class StockLocation(Base):
     reserved_quantity = Column(Numeric(10, 2), default=0)
 
     product = relationship("Product", back_populates="stock_locations")
-    address = relationship("StorageAddress")
+    address = relationship("StorageAddress", back_populates="stock_locations")

@@ -19,16 +19,11 @@ EDIT_ROLES = ["admin", "storekeeper"]
 def _build_address_rows(db):
     """
     Возвращает список строк для таблицы сгруппированных по адресу.
-    Каждый элемент: {
-        "address": StorageAddress,
-        "rowspan": int,
-        "locations": [StockLocation, ...],  # может быть пустым
-    }
+    Показывает все адреса включая пустые.
     """
     addresses = db.query(StorageAddress).order_by(StorageAddress.display_name).all()
     locations = db.query(StockLocation).filter(StockLocation.quantity > 0).all()
 
-    # Группируем локации по address_id
     loc_by_addr = {}
     for loc in locations:
         loc_by_addr.setdefault(loc.address_id, []).append(loc)
@@ -38,7 +33,6 @@ def _build_address_rows(db):
         locs = loc_by_addr.get(addr.id, [])
         rows.append({
             "address": addr,
-            "rowspan": max(len(locs), 1),
             "locations": locs,
         })
     return rows

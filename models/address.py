@@ -21,6 +21,8 @@ class Row(Base):
 
     zone = relationship("Zone", back_populates="rows")
     shelves = relationship("Shelf", back_populates="row", cascade="all, delete-orphan")
+    address = relationship("StorageAddress", back_populates="row",
+                           uselist=False, cascade="all, delete-orphan")
 
 
 class Shelf(Base):
@@ -42,20 +44,27 @@ class Level(Base):
     name = Column(String(50), nullable=False)
 
     shelf = relationship("Shelf", back_populates="levels")
+    address = relationship("StorageAddress", back_populates="level",
+                           uselist=False, cascade="all, delete-orphan")
 
 
 class StorageAddress(Base):
     __tablename__ = "storage_addresses"
 
     id = Column(Integer, primary_key=True)
-    address_type = Column(String(20), nullable=False)  # zone_row or zone_row_shelf_level
-    zone_id = Column(Integer, ForeignKey("zones.id"), nullable=False)
-    row_id = Column(Integer, ForeignKey("rows.id"), nullable=False)
-    shelf_id = Column(Integer, ForeignKey("shelves.id"), nullable=True)
-    level_id = Column(Integer, ForeignKey("levels.id"), nullable=True)
-    display_name = Column(String(100), nullable=False)
+    # Либо row_id (Зона+Ряд), либо level_id (Зона+Ряд+Стеллаж+Уровень)
+    row_id = Column(Integer, ForeignKey("rows.id"), nullable=True, unique=True)
+    level_id = Column(Integer, ForeignKey("levels.id"), nullable=True, unique=True)
+    display_name = Column(String(200), nullable=False)
 
-    zone = relationship("Zone")
-    row = relationship("Row")
-    shelf = relationship("Shelf")
-    level = relationship("Level")
+    row = relationship("Row", back_populates="address")
+    level = relationship("Level", back_populates="address")
+    stock_locations = relationship("StockLocation", back_populates="address")
+
+    @property
+    def zone(self):
+        if self.row:
+            return self.row.zone
+        if self.level and self.level.shelf and self.level.shelf.row:
+            return self.level.shelf.row.zone
+        return None

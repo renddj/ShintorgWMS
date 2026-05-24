@@ -207,7 +207,24 @@ shintorg_v2/
 
 Экран входа
 ![Экран входа](screenshots/login.png)
-
+Список товаров
+![Список товаров](screenshots/product.png)
+Карточка товара
+![Карточка товара](screenshots/product_card.png)
+Карта склада
+![Карта склада](screenshots/sklad_map.png)
+Задания
+![Задания](screenshots/tasks.png)
+Карточка задания
+![Карточка задания](screenshots/task_card.png)
+История движения
+![История движения](screenshots/history.png)
+Экспорт
+![Экспорт](screenshots/export.png)
+Пользователи
+![Пользователи](screenshots/users.png)
+Адресная структура
+![Адресная структура](screenshots/address.png)
 ---
 
 ## Переменные окружения

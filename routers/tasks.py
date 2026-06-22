@@ -76,7 +76,7 @@ def task_detail(task_id: int, request: Request, db: Session = Depends(get_db)):
     if not task:
         return RedirectResponse("/tasks", 302)
 
-    # Для планирования — передаём локации с остатками
+   
     locations = []
     if task.status == "new" and user.role == "storekeeper":
         if task.task_type == "shipment":
@@ -84,11 +84,11 @@ def task_detail(task_id: int, request: Request, db: Session = Depends(get_db)):
                 StockLocation.product_id == task.product_id,
                 StockLocation.quantity > 0,
             ).all()
-        else:  # receipt — все адреса
+        else: 
             locations = db.query(StockLocation).filter(
                 StockLocation.product_id == task.product_id,
             ).all()
-            # Добавляем адреса где товара нет вообще (пустые)
+            
             used_addr_ids = {l.address_id for l in locations}
             all_addresses = db.query(StorageAddress).order_by(StorageAddress.display_name).all()
             for addr in all_addresses:

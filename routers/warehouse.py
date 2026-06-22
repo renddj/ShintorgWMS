@@ -107,7 +107,7 @@ def warehouse_task(
 
     task, error = create_task(db, "move", product_id, quantity, user.id, comment or None, to_address_id)
 
-    # Сразу создаём task_line с адресом источника и переводим в in_progress
+    
     if task and not error:
         from models.task import TaskLine
         from models.product import StockLocation

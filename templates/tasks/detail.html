@@ -154,7 +154,7 @@
 
 {% block scripts %}
 <script>
-// Счётчик распределённого количества
+
 var inputs = document.querySelectorAll('.qty-input');
 var totalPlanned = document.getElementById('total-planned');
 var totalNeed = document.getElementById('total-need');
@@ -171,7 +171,7 @@ function updateTotal() {
 inputs.forEach(function(inp) { inp.addEventListener('input', updateTotal); });
 updateTotal();
 
-// Проблема toggle
+
 var problemBtn = document.getElementById('problem-toggle');
 var problemForm = document.getElementById('problem-form');
 if (problemBtn && problemForm) {

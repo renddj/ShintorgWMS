@@ -52,7 +52,6 @@ class StorageAddress(Base):
     __tablename__ = "storage_addresses"
 
     id = Column(Integer, primary_key=True)
-    # Либо row_id (Зона+Ряд), либо level_id (Зона+Ряд+Стеллаж+Уровень)
     row_id = Column(Integer, ForeignKey("rows.id"), nullable=True, unique=True)
     level_id = Column(Integer, ForeignKey("levels.id"), nullable=True, unique=True)
     display_name = Column(String(200), nullable=False)

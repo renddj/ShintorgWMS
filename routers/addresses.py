@@ -57,7 +57,7 @@ def zone_delete(zone_id: int, request: Request, db: Session = Depends(get_db)):
     if not zone:
         return RedirectResponse("/addresses", 302)
 
-    # Проверяем все адреса в зоне
+    
     for row in zone.rows:
         if row.address and _address_has_stock(db, row.address.id):
             return templates.TemplateResponse("addresses/list.html", {
@@ -94,7 +94,7 @@ def row_new(request: Request, zone_id: int = Form(...), name: str = Form(...),
     db.add(row)
     db.flush()
 
-    # Ряд без стеллажей = адрес хранения
+   
     addr = StorageAddress(
         row_id=row.id,
         display_name=_build_display_name(zone.name, name)
@@ -113,7 +113,7 @@ def row_delete(row_id: int, request: Request, db: Session = Depends(get_db)):
     if not row:
         return RedirectResponse("/addresses", 302)
 
-    # Проверяем остатки
+    
     if row.address and _address_has_stock(db, row.address.id):
         return templates.TemplateResponse("addresses/list.html", {
             "request": request, "user": user,
@@ -145,7 +145,6 @@ def shelf_new(request: Request, row_id: int = Form(...), name: str = Form(...),
     if not row:
         return RedirectResponse("/addresses", 302)
 
-    # Нельзя добавить стеллаж если на ряду есть остатки
     if row.address and _address_has_stock(db, row.address.id):
         return templates.TemplateResponse("addresses/list.html", {
             "request": request, "user": user,
@@ -153,7 +152,6 @@ def shelf_new(request: Request, row_id: int = Form(...), name: str = Form(...),
             "error": f"Нельзя добавить стеллаж к ряду «{row.name}» — на нём есть товар. Сначала переместите товар."
         })
 
-    # Если у ряда был адрес (без стеллажей) — удаляем его
     if row.address:
         db.delete(row.address)
         db.flush()
@@ -162,7 +160,6 @@ def shelf_new(request: Request, row_id: int = Form(...), name: str = Form(...),
     db.add(shelf)
     db.commit()
 
-    # Возвращаем JSON с id стеллажа для JS (inline форма уровней)
     return JSONResponse({"shelf_id": shelf.id, "shelf_name": name})
 
 
@@ -187,7 +184,7 @@ def shelf_delete(shelf_id: int, request: Request, db: Session = Depends(get_db))
     db.delete(shelf)
     db.flush()
 
-    # Если у ряда больше нет стеллажей — создаём адрес для ряда
+    
     db.refresh(row)
     if not row.shelves:
         db.add(StorageAddress(
@@ -246,7 +243,7 @@ def level_delete(level_id: int, request: Request, db: Session = Depends(get_db))
     return RedirectResponse("/addresses", 302)
 
 
-# ── API для каскадных селектов (используется в других местах) ─────────────────
+
 
 @router.get("/api/rows")
 def api_rows(zone_id: int, db: Session = Depends(get_db)):

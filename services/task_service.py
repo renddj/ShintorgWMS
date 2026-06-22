@@ -40,7 +40,6 @@ def plan_task(db: Session, task_id: int, user_id: int, lines: list[dict]):
     if abs(total - float(task.quantity)) > 0.001:
         return None, f"Сумма строк ({total}) не совпадает с количеством задания ({float(task.quantity)})"
 
-    # Для отгрузки и перемещения — резервируем остатки по адресам источника
     if task.task_type in ("shipment", "move"):
         for l in lines:
             qty = float(l["quantity"])
@@ -109,12 +108,12 @@ def close_task(db: Session, task_id: int, user_id: int):
             ))
 
         elif task.task_type == "move":
-            # Списываем с источника (line.address_id)
+            
             qty_before_from = float(loc.quantity)
             loc.quantity = qty_before_from - qty
             loc.reserved_quantity = max(0, float(loc.reserved_quantity or 0) - qty)
 
-            # Добавляем на адрес назначения (task.to_address_id)
+           
             to_loc = db.query(StockLocation).filter(
                 StockLocation.product_id == task.product_id,
                 StockLocation.address_id == task.to_address_id,

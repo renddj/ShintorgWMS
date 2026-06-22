@@ -8,18 +8,17 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True)
-    task_type = Column(String(20), nullable=False, default="shipment")  # shipment, receipt
+    task_type = Column(String(20), nullable=False, default="shipment")  
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     quantity = Column(Numeric(10, 2), nullable=False)
     status = Column(String(20), nullable=False, default="new")
-    # new, planning, in_progress, problem, done, cancelled
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     assigned_to = Column(Integer, ForeignKey("users.id"), nullable=True)
     comment = Column(Text, nullable=True)
     problem_comment = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-    to_address_id = Column(Integer, ForeignKey("storage_addresses.id"), nullable=True)  # для move
+    to_address_id = Column(Integer, ForeignKey("storage_addresses.id"), nullable=True) 
     closed_at = Column(DateTime, nullable=True)
 
     product = relationship("Product", back_populates="tasks")

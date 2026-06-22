@@ -32,7 +32,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
         active_count = db.query(Task).filter(Task.status.in_(["new", "in_progress"])).count()
         problem_count = db.query(Task).filter(Task.status == "problem").count()
 
-        # Считаем товары с остатком ниже минимального через stock_locations
+        
         products = db.query(Product).filter(Product.min_quantity > 0).all()
         low_stock_count = sum(1 for p in products if p.is_low_stock)
 

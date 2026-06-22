@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
+
 """Script to create first admin user. Run once after first deploy."""
 import sys
 import os
 
-# Fix encoding on Windows
+
 if sys.platform == "win32":
     import io
     sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
@@ -12,7 +12,7 @@ if sys.platform == "win32":
 sys.path.insert(0, os.path.dirname(__file__))
 
 from database import SessionLocal, engine, Base
-import models  # noqa: F401
+import models  
 from models.user import User
 from services.auth_service import hash_password
 
@@ -31,7 +31,7 @@ def safe_input(prompt):
 username = safe_input("Логин администратора [admin]: ").strip() or "admin"
 full_name = safe_input("ФИО администратора [Администратор]: ").strip() or "Администратор"
 
-# Sanitize — remove surrogate characters
+
 username = username.encode('utf-8', 'ignore').decode('utf-8')
 full_name = full_name.encode('utf-8', 'ignore').decode('utf-8')
 

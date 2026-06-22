@@ -247,7 +247,7 @@ function filterWarehouse() {
     var brand = whBrand ? whBrand.value.toLowerCase() : "";
     var size  = whSize  ? whSize.value.toLowerCase()  : "";
 
-    // Группируем строки по адресу
+    
     var addrGroups = {};
     var addrOrder  = [];
     document.querySelectorAll("#wh-table tbody tr[data-addr-id]").forEach(function(row) {
@@ -261,13 +261,13 @@ function filterWarehouse() {
         var addrZone = (rows[0].dataset.zone || "").toLowerCase();
         var zoneOk   = !zone || addrZone === zone;
 
-        // Определяем какие строки товаров проходят фильтр
+        
         var visibleRows = [];
         rows.forEach(function(row) {
             var rowName  = row.dataset.name  || "";
             var rowBrand = row.dataset.brand || "";
             var rowSize  = row.dataset.size  || "";
-            // Пустая строка (адрес без товаров) видна если зона подходит
+            
             var isEmpty  = rowName === "" && rowBrand === "" && rowSize === "";
             var ok = zoneOk && (
                 isEmpty ||
@@ -279,17 +279,17 @@ function filterWarehouse() {
             if (ok) visibleRows.push(row);
         });
 
-        // Если зона не подходит — скрыть всё
+        
         if (!zoneOk) {
             rows.forEach(function(r) { r.style.display = "none"; });
             return;
         }
 
-        // Первая видимая строка должна показывать адрес и кнопки
+        
         rows.forEach(function(row) {
             var addrCell = row.cells[0];
             var isFirst  = visibleRows.length > 0 && row === visibleRows[0];
-            // Показать адрес только в первой видимой строке
+            
             if (row.style.display !== "none") {
                 if (isFirst) {
                     addrCell.style.fontWeight = "bold";
@@ -308,13 +308,13 @@ function filterWarehouse() {
     if (el) el.addEventListener("change", filterWarehouse);
 });
 
-// Кнопка Действия — собираем товары из строк таблицы
+
 document.querySelectorAll(".btn-action").forEach(function(btn) {
     btn.addEventListener("click", function() {
         var addrId   = this.dataset.addrId;
         var addrName = this.dataset.addrName;
 
-        // Собираем товары с этого адреса из строк таблицы
+        
         var prods = [];
         document.querySelectorAll("#wh-table tbody tr[data-addr-id='" + addrId + "']").forEach(function(row) {
             var prodId   = row.dataset.prodId;
@@ -350,7 +350,7 @@ document.querySelectorAll(".btn-action").forEach(function(btn) {
     });
 });
 
-// Обновить доступное кол-во при выборе товара
+
 document.getElementById("action-product-select") && document.getElementById("action-product-select").addEventListener("change", function() {
     var opt = this.options[this.selectedIndex];
     var avail = opt ? (opt.dataset.avail || "") : "";
@@ -358,7 +358,7 @@ document.getElementById("action-product-select") && document.getElementById("act
     document.getElementById("action-product-id").value = this.value;
 });
 
-// Сабмит формы действий
+
 function submitAction(action) {
     var prodSel = document.getElementById("action-product-select");
     document.getElementById("action-product-id").value = prodSel ? prodSel.value : "";
@@ -380,7 +380,7 @@ function submitAction(action) {
     form.submit();
 }
 
-// Кнопка Приёмка
+
 document.querySelectorAll(".btn-receipt").forEach(function(btn) {
     btn.addEventListener("click", function() {
         var addrId   = this.dataset.addrId;

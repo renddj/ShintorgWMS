@@ -4,24 +4,24 @@ from fastapi.responses import RedirectResponse
 import os
 
 from database import engine, Base
-import models  # noqa: F401 — register all models
+import models  
 
 from routers import auth, dashboard, products, addresses, tasks, stock, export, users, warehouse
 
 app = FastAPI(title="Шинторг WMS")
 
-# Create tables on startup (for dev; use alembic in prod)
+
 Base.metadata.create_all(bind=engine)
 
-# Static files
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Uploads directory
+
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# Routers
+
 app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(products.router)

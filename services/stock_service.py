@@ -85,11 +85,9 @@ def move(db: Session, product_id: int, from_address_id: int, to_address_id: int,
     if available < quantity:
         return None, f"Недостаточно товара. Доступно: {available}"
 
-    # Списываем с источника
     qty_before_from = float(from_loc.quantity)
     from_loc.quantity = qty_before_from - quantity
 
-    # Добавляем на назначение
     to_loc = db.query(StockLocation).filter(
         StockLocation.product_id == product_id,
         StockLocation.address_id == to_address_id,
@@ -107,7 +105,6 @@ def move(db: Session, product_id: int, from_address_id: int, to_address_id: int,
     qty_before_to = float(to_loc.quantity)
     to_loc.quantity = qty_before_to + quantity
 
-    # Пишем в историю двумя строками: списание и приход
     from models.address import StorageAddress as _SA
     from_addr = db.query(_SA).filter_by(id=from_address_id).first()
     to_addr = db.query(_SA).filter_by(id=to_address_id).first()

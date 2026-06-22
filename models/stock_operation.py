@@ -9,7 +9,7 @@ class StockOperation(Base):
 
     id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    operation = Column(String(20), nullable=False)  # receipt, shipment, writeoff
+    operation = Column(String(20), nullable=False)  
     quantity = Column(Numeric(10, 2), nullable=False)
     qty_before = Column(Numeric(10, 2), nullable=False)
     qty_after = Column(Numeric(10, 2), nullable=False)

@@ -190,7 +190,7 @@ function submitAddRow(zoneId) {
 }
 
 // ── Стеллажи (новый) ──────────────────────────────────────────────────────────
-var _currentShelfId = {};  // rowId -> shelfId (только что созданного)
+var _currentShelfId = {};  
 
 function showAddShelf(rowId, rowName, zoneId, zoneName) {
     document.getElementById("add-shelf-form-" + rowId).style.display = "";
@@ -285,7 +285,7 @@ function submitAddLevelExisting(shelfId, rowId) {
     });
 }
 
-// Enter для всех input
+
 document.querySelectorAll("input[type=text]").forEach(function(inp) {
     inp.addEventListener("keydown", function(e) {
         if (e.key === "Enter") {

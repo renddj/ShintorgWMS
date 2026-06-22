@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
             else shelfFormRow.innerHTML = '<option value="">-- ряд --</option>';
         });
 
-        // Загрузить ряды при открытии аккордеона (если зона уже выбрана)
+        
         var colShelfEl = document.getElementById("colShelf");
         if (colShelfEl) {
             colShelfEl.addEventListener("show.bs.collapse", function() {

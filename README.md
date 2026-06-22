@@ -33,40 +33,40 @@
 
 ```
 shintorg_v2/
-├── main.py                  # Точка входа FastAPI
-├── database.py              # Подключение к БД
-├── config.py                # Конфигурация из переменных окружения
-├── create_admin.py          # Скрипт создания первого администратора
-├── seed.py                  # Скрипт заполнения тестовыми данными
+├── main.py                  
+├── database.py              
+├── config.py                
+├── create_admin.py          
+├── seed.py                  
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
 │
-├── models/                  # SQLAlchemy модели
+├── models/                  
 │   ├── user.py
-│   ├── address.py           # Zone, Row, Shelf, Level, StorageAddress
-│   ├── product.py           # Product, StockLocation
-│   ├── task.py              # Task, TaskLine
+│   ├── address.py           
+│   ├── product.py           
+│   ├── task.py              
 │   └── stock_operation.py
 │
-├── routers/                 # FastAPI роутеры
+├── routers/                 
 │   ├── auth.py
 │   ├── dashboard.py
 │   ├── products.py
 │   ├── addresses.py
 │   ├── tasks.py
 │   ├── stock.py
-│   ├── warehouse.py         # Карта склада
+│   ├── warehouse.py        
 │   ├── export.py
 │   └── users.py
 │
-├── services/                # Бизнес-логика
+├── services/                
 │   ├── auth_service.py
-│   ├── stock_service.py     # Приёмка, списание, перемещение
-│   ├── task_service.py      # Создание, планирование, закрытие заданий
+│   ├── stock_service.py     
+│   ├── task_service.py      
 │   └── export_service.py
 │
-├── templates/               # Jinja2 шаблоны
+├── templates/              
 │   ├── base.html
 │   ├── login.html
 │   ├── dashboard/
@@ -81,7 +81,7 @@ shintorg_v2/
 └── static/
     ├── css/custom.css
     ├── js/main.js
-    └── vendor/bootstrap/    # Bootstrap 5.3 (локально)
+    └── vendor/bootstrap/    
 ```
 
 ## Стек технологий
